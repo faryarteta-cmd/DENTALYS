@@ -144,13 +144,14 @@ textarea{resize:vertical;min-height:58px}
       <div class="nav-item" onclick="nav('nuevo')"><i class="ti ti-user-plus"></i> Nuevo paciente</div>
       <div class="nav-sec">Economía</div>
       <div class="nav-item" onclick="nav('caja')"><i class="ti ti-cash"></i> Caja del día</div>
+      <div class="nav-item" onclick="nav('recibo')"><i class="ti ti-receipt"></i> Recibos / SUNAT</div>
+      <div class="nav-sec">Economía</div>
       <div class="nav-item" onclick="nav('egresos')"><i class="ti ti-arrow-down-circle"></i> Egresos / Gastos</div>
       <div class="nav-item" onclick="nav('deudas')"><i class="ti ti-alert-triangle"></i> Deudas fijas</div>
-      <div class="nav-item" onclick="nav('recibo')"><i class="ti ti-receipt"></i> Recibos / SUNAT</div>
       <div class="nav-sec">Clínica</div>
       <div class="nav-item" onclick="nav('agenda')"><i class="ti ti-calendar"></i> Agenda / Citas</div>
-      <div class="nav-item" onclick="nav('kardex')"><i class="ti ti-box"></i> Kárdex de materiales</div>
-      <div class="nav-item" onclick="nav('equipos')"><i class="ti ti-tool"></i> Equipos y mantenimiento</div>
+      <div class="nav-item" onclick="nav('kardex')"><i class="ti ti-box"></i> Kárdex materiales</div>
+      <div class="nav-item" onclick="nav('equipos')"><i class="ti ti-tool"></i> Equipos</div>
       <div class="nav-item" onclick="nav('consentimientos')"><i class="ti ti-file-check"></i> Consentimientos</div>
       <div class="nav-sec">Configuración</div>
       <div class="nav-item" onclick="nav('profesionales')"><i class="ti ti-user-cog"></i> Profesionales</div>
@@ -212,11 +213,11 @@ const SUNAT_URL = 'https://ww1.sunat.gob.pe/ol-ti-itrheemision/emisionrhe.do';
 let S = {
   patients:{}, sessions:{}, payments:{}, controls:{}, toothData:{}, examenes:{},
   profesionales:['Dr./Dra. - (sin asignar)'],
-  egresos:[], deudas:[
+  egresos:[], citas:[], kardex:[], equipos:[], consentimientos:[],
+  deudas:[
     {id:'D1',nombre:'Alquiler',monto:1500,categoria:'Alquiler',dia:1,pendientes:2},
     {id:'D2',nombre:'Personal',monto:1000,categoria:'Personal',dia:1,pendientes:0}
-  ],
-  kardex:[], equipos:[], citas:[], consentimientos:[]
+  ]
 };
 let curPid = null, curTab = 'hc';
 
@@ -491,7 +492,7 @@ function selPac(pid){
 // ═══════════════════════════════════════════════════════════
 // NAVEGACIÓN
 // ═══════════════════════════════════════════════════════════
-const PAGE_TITLES={dashboard:'Inicio',alertas:'Controles programados',pacientes:'Lista de pacientes',nuevo:'Nuevo paciente',caja:'Caja del día',egresos:'Egresos / Gastos',deudas:'Deudas fijas',recibo:'Recibos / SUNAT',agenda:'Agenda / Citas',kardex:'Kárdex de materiales',equipos:'Equipos y mantenimiento',consentimientos:'Consentimientos informados',profesionales:'Profesionales',estadistica:'Estadísticas',reporte:'Reporte mensual',exportar:'Exportar',ficha:'Ficha del paciente'};
+const PAGE_TITLES={dashboard:'Inicio',alertas:'Controles programados',pacientes:'Lista de pacientes',nuevo:'Nuevo paciente',caja:'Caja del día',egresos:'Egresos',deudas:'Deudas fijas',agenda:'Agenda',kardex:'Kárdex',equipos:'Equipos',consentimientos:'Consentimientos',recibo:'Recibos',profesionales:'Profesionales',estadistica:'Estadísticas',reporte:'Reporte mensual',exportar:'Exportar',ficha:'Ficha del paciente'};
 const NAV_IDX={dashboard:0,alertas:1,pacientes:3,nuevo:4,caja:6,recibo:7,profesionales:9,estadistica:11,exportar:12};
 function nav(page){
   document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
@@ -506,12 +507,12 @@ function nav(page){
   else if(page==='caja')pgCaja(c);
   else if(page==='egresos')pgEgresos(c);
   else if(page==='deudas')pgDeudas(c);
-  else if(page==='recibo')pgRecibo(c);
   else if(page==='agenda')pgAgenda(c);
   else if(page==='kardex')pgKardex(c);
   else if(page==='equipos')pgEquipos(c);
   else if(page==='consentimientos')pgConsentimientos(c);
   else if(page==='reporte')pgReporte(c);
+  else if(page==='recibo')pgRecibo(c);
   else if(page==='profesionales')pgProfesionales(c);
   else if(page==='estadistica')pgStats(c);
   else if(page==='exportar')pgExportar(c);
@@ -1178,153 +1179,6 @@ function showAdminRep(){
     '<div style="margin-top:12px"><a href="'+SHEET_URL+'" target="_blank" class="btn btn-sheets btn-sm"><i class="ti ti-external-link"></i> Ver en Google Sheets</a></div>';
 }
 
-
-// ═══════════════════════════════════════════════════════════
-// EGRESOS / GASTOS
-// ═══════════════════════════════════════════════════════════
-const CAT_EGRESO=['Materiales dentales','Servicios (luz/agua/internet)','Alquiler','Personal','Residuos contaminados','Mantenimiento','Equipos / instrumental','Otros'];
-
-function pgEgresos(c){
-  if(!S.egresos)S.egresos=[];
-  const tod=today();
-  const mes=tod.slice(0,7);
-  const delMes=S.egresos.filter(e=>e.fecha&&e.fecha.startsWith(mes));
-  const totalMes=delMes.reduce((s,e)=>s+(parseFloat(e.monto)||0),0);
-  const totalIngrMes=Object.values(S.payments).flat().filter(p=>p.fecha&&p.fecha.startsWith(mes)).reduce((s,p)=>s+(parseFloat(p.monto)||0),0);
-  const saldo=totalIngrMes-totalMes;
-
-  let byCat={};
-  delMes.forEach(e=>{byCat[e.categoria]=(byCat[e.categoria]||0)+(parseFloat(e.monto)||0);});
-
-  c.innerHTML=
-    '<div class="grid3" style="margin-bottom:14px">'+
-      '<div class="metric"><div class="metric-v" style="color:var(--ok)">S/ '+totalIngrMes.toFixed(2)+'</div><div class="metric-l">Ingresos del mes</div></div>'+
-      '<div class="metric"><div class="metric-v" style="color:var(--red)">S/ '+totalMes.toFixed(2)+'</div><div class="metric-l">Egresos del mes</div></div>'+
-      '<div class="metric"><div class="metric-v" style="color:'+(saldo>=0?'var(--ok)':'var(--red)')+'">S/ '+Math.abs(saldo).toFixed(2)+'</div><div class="metric-l">'+(saldo>=0?'Saldo a favor':'Déficit')+'</div></div>'+
-    '</div>'+
-    '<div class="card"><div class="card-title"><i class="ti ti-plus"></i> Registrar egreso</div>'+
-      '<div class="grid3">'+
-        '<div class="form-row"><label>Fecha</label><input type="date" id="eg_f" value="'+tod+'" /></div>'+
-        '<div class="form-row"><label>Categoría</label><select id="eg_c">'+CAT_EGRESO.map(c=>'<option>'+c+'</option>').join('')+'</select></div>'+
-        '<div class="form-row"><label>Monto (S/)</label><input type="number" id="eg_m" placeholder="0.00" /></div>'+
-      '</div>'+
-      '<div class="grid2">'+
-        '<div class="form-row"><label>Descripción</label><input id="eg_d" placeholder="Ej: composite A2, 5 jeringas" /></div>'+
-        '<div class="form-row"><label>Método de pago</label><select id="eg_p"><option>Efectivo</option><option>Yape/Plin</option><option>Transferencia</option></select></div>'+
-      '</div>'+
-      '<button class="btn btn-primary" onclick="saveEgreso()"><i class="ti ti-device-floppy"></i> Guardar egreso</button>'+
-    '</div>'+
-    '<div class="card"><div class="card-title"><i class="ti ti-chart-pie"></i> Por categoría — '+mes+'</div>'+
-      (Object.keys(byCat).length===0?'<div style="font-size:12px;color:#ccc">Sin egresos este mes</div>':
-        Object.entries(byCat).sort((a,b)=>b[1]-a[1]).map(([cat,v])=>
-          '<div style="margin-bottom:8px"><div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:3px"><span style="color:#888">'+cat+'</span><span style="color:var(--red);font-weight:500">S/ '+v.toFixed(2)+'</span></div>'+
-          '<div class="prog-bar"><div style="height:100%;background:var(--red);border-radius:10px;width:'+Math.round(v/totalMes*100)+'%"></div></div></div>'
-        ).join(''))+
-    '</div>'+
-    '<div class="card"><div class="card-title"><i class="ti ti-history"></i> Historial de egresos</div>'+
-      (S.egresos.length===0?'<div style="font-size:12px;color:#ccc">Sin egresos registrados</div>':
-        [...S.egresos].reverse().slice(0,30).map(e=>
-          '<div class="pago-row">'+
-            '<div><div style="font-weight:500">'+e.descripcion+'</div>'+
-            '<div style="font-size:10px;color:#bbb">'+fd(e.fecha)+' · '+e.categoria+' · '+e.metodo+'</div></div>'+
-            '<span class="badge bd">S/ '+parseFloat(e.monto).toFixed(2)+'</span>'+
-          '</div>'
-        ).join(''))+
-    '</div>';
-}
-
-function saveEgreso(){
-  const f=document.getElementById('eg_f').value;
-  const m=parseFloat(document.getElementById('eg_m').value)||0;
-  if(!f||!m){alert('Fecha y monto requeridos');return;}
-  if(!S.egresos)S.egresos=[];
-  const eg={id:'EG'+Date.now(),fecha:f,categoria:document.getElementById('eg_c').value,monto:m.toFixed(2),descripcion:document.getElementById('eg_d').value||'Sin descripción',metodo:document.getElementById('eg_p').value};
-  S.egresos.push(eg);
-  saveL();
-  showToast('✓ Egreso registrado','#27ae60');
-  gsSave('saveEgreso',eg);
-  pgEgresos(document.getElementById('pageContent'));
-}
-
-// ═══════════════════════════════════════════════════════════
-// DEUDAS FIJAS
-// ═══════════════════════════════════════════════════════════
-function pgDeudas(c){
-  if(!S.deudas)S.deudas=[];
-  const totalDeuda=S.deudas.reduce((s,d)=>s+(parseFloat(d.monto)||0)*(parseInt(d.pendientes)||0),0);
-  c.innerHTML=
-    '<div class="card" style="background:#fff8f8;border-color:#fca5a5"><div class="card-title" style="color:var(--red)"><i class="ti ti-alert-triangle"></i> Deuda total acumulada</div>'+
-      '<div style="font-size:28px;font-weight:300;color:var(--red)">S/ '+totalDeuda.toFixed(2)+'</div>'+
-      '<div style="font-size:11px;color:#aaa;margin-top:4px">Suma de todos los meses pendientes</div>'+
-    '</div>'+
-    '<div class="card"><div class="card-title"><i class="ti ti-plus"></i> Agregar gasto fijo</div>'+
-      '<div class="grid3">'+
-        '<div class="form-row"><label>Nombre</label><input id="df_n" placeholder="Ej: Alquiler" /></div>'+
-        '<div class="form-row"><label>Monto mensual (S/)</label><input type="number" id="df_m" /></div>'+
-        '<div class="form-row"><label>Categoría</label><select id="df_c">'+CAT_EGRESO.map(c=>'<option>'+c+'</option>').join('')+'</select></div>'+
-      '</div>'+
-      '<div class="grid2">'+
-        '<div class="form-row"><label>Día de vencimiento</label><input type="number" id="df_d" placeholder="1-31" min="1" max="31" /></div>'+
-        '<div class="form-row"><label>Meses pendientes</label><input type="number" id="df_p" value="0" min="0" /></div>'+
-      '</div>'+
-      '<button class="btn btn-primary" onclick="saveDeuda()"><i class="ti ti-device-floppy"></i> Guardar</button>'+
-    '</div>'+
-    '<div class="card"><div class="card-title"><i class="ti ti-list"></i> Gastos fijos ('+S.deudas.length+')</div>'+
-      (S.deudas.length===0?'<div style="font-size:12px;color:#ccc">Sin gastos fijos registrados</div>':
-        S.deudas.map((d,i)=>
-          '<div class="ctrl-item">'+
-            '<div>'+
-              '<div style="font-weight:500;font-size:13px">'+d.nombre+'</div>'+
-              '<div style="font-size:10px;color:#bbb">S/ '+parseFloat(d.monto).toFixed(2)+'/mes · vence día '+d.dia+' · '+d.categoria+'</div>'+
-              (parseInt(d.pendientes)>0?'<div style="font-size:11px;color:var(--red);margin-top:2px;font-weight:500">⚠ '+d.pendientes+' mes(es) pendiente(s) — S/ '+(parseFloat(d.monto)*parseInt(d.pendientes)).toFixed(2)+'</div>':'<div style="font-size:11px;color:var(--ok)">✓ Al día</div>')+
-            '</div>'+
-            '<div style="display:flex;gap:5px;align-items:center">'+
-              (parseInt(d.pendientes)>0?'<button class="btn btn-primary btn-sm" onclick="pagarMesDeuda('+i+')">Pagar 1 mes</button>':'')+
-              '<button class="btn btn-sm" onclick="addMesDeuda('+i+')" style="color:var(--warn);border-color:var(--warn)">+1 mes</button>'+
-              '<button class="btn btn-sm" style="color:var(--red);border-color:#fca5a5" onclick="delDeuda('+i+')"><i class="ti ti-trash"></i></button>'+
-            '</div>'+
-          '</div>'
-        ).join(''))+
-    '</div>';
-}
-
-function saveDeuda(){
-  const n=document.getElementById('df_n').value.trim();
-  const m=parseFloat(document.getElementById('df_m').value)||0;
-  if(!n||!m){alert('Nombre y monto requeridos');return;}
-  if(!S.deudas)S.deudas=[];
-  S.deudas.push({id:'DF'+Date.now(),nombre:n,monto:m,categoria:document.getElementById('df_c').value,dia:parseInt(document.getElementById('df_d').value)||1,pendientes:parseInt(document.getElementById('df_p').value)||0});
-  saveL();
-  showToast('✓ Gasto fijo agregado','#27ae60');
-  pgDeudas(document.getElementById('pageContent'));
-}
-
-function pagarMesDeuda(i){
-  if(S.deudas[i].pendientes>0){
-    S.deudas[i].pendientes--;
-    // registrar como egreso
-    if(!S.egresos)S.egresos=[];
-    S.egresos.push({id:'EG'+Date.now(),fecha:today(),categoria:S.deudas[i].categoria,monto:parseFloat(S.deudas[i].monto).toFixed(2),descripcion:'Pago: '+S.deudas[i].nombre,metodo:'Efectivo'});
-    saveL();
-    showToast('✓ Mes pagado registrado','#27ae60');
-    pgDeudas(document.getElementById('pageContent'));
-  }
-}
-
-function addMesDeuda(i){
-  S.deudas[i].pendientes=(parseInt(S.deudas[i].pendientes)||0)+1;
-  saveL();
-  showToast('Mes pendiente agregado','#e67e22');
-  pgDeudas(document.getElementById('pageContent'));
-}
-
-function delDeuda(i){
-  if(!confirm('¿Eliminar este gasto fijo?'))return;
-  S.deudas.splice(i,1);
-  saveL();
-  pgDeudas(document.getElementById('pageContent'));
-}
-
 // ═══════════════════════════════════════════════════════════
 // RECIBOS
 // ═══════════════════════════════════════════════════════════
@@ -1484,315 +1338,389 @@ function doExport(){
   }
 }
 
+
 // ═══════════════════════════════════════════════════════════
-// AGENDA / CITAS
+// EGRESOS
+// ═══════════════════════════════════════════════════════════
+var CAT_EGRESO=['Materiales dentales','Servicios','Alquiler','Personal','Residuos contaminados','Mantenimiento','Equipos','Otros'];
+
+function pgEgresos(c){
+  if(!S.egresos)S.egresos=[];
+  var tod=today(), mes=tod.slice(0,7);
+  var delMes=S.egresos.filter(function(e){return e.fecha&&e.fecha.startsWith(mes);});
+  var totalMes=delMes.reduce(function(s,e){return s+(parseFloat(e.monto)||0);},0);
+  var totalIngr=Object.values(S.payments).flat().filter(function(p){return p.fecha&&p.fecha.startsWith(mes);}).reduce(function(s,p){return s+(parseFloat(p.monto)||0);},0);
+  var saldo=totalIngr-totalMes;
+  var byCat={};
+  delMes.forEach(function(e){byCat[e.categoria]=(byCat[e.categoria]||0)+(parseFloat(e.monto)||0);});
+  var catRows=Object.entries(byCat).sort(function(a,b){return b[1]-a[1];}).map(function(entry){
+    var cat=entry[0],v=entry[1];
+    return '<div style="margin-bottom:8px"><div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:3px"><span style="color:#888">'+cat+'</span><span style="color:var(--red);font-weight:500">S/ '+v.toFixed(2)+'</span></div><div class="prog-bar"><div style="height:100%;background:var(--red);border-radius:10px;width:'+Math.round(v/totalMes*100)+'%"></div></div></div>';
+  }).join('');
+  var histRows=[...S.egresos].reverse().slice(0,30).map(function(e){
+    return '<div class="pago-row"><div><div style="font-weight:500">'+e.descripcion+'</div><div style="font-size:10px;color:#bbb">'+fd(e.fecha)+' - '+e.categoria+' - '+e.metodo+'</div></div><span class="badge bd">S/ '+parseFloat(e.monto).toFixed(2)+'</span></div>';
+  }).join('');
+  c.innerHTML=
+    '<div class="grid3" style="margin-bottom:14px">'+
+      '<div class="metric"><div class="metric-v" style="color:var(--ok)">S/ '+totalIngr.toFixed(2)+'</div><div class="metric-l">Ingresos mes</div></div>'+
+      '<div class="metric"><div class="metric-v" style="color:var(--red)">S/ '+totalMes.toFixed(2)+'</div><div class="metric-l">Egresos mes</div></div>'+
+      '<div class="metric"><div class="metric-v" style="color:'+(saldo>=0?'var(--ok)':'var(--red)')+'">S/ '+Math.abs(saldo).toFixed(2)+'</div><div class="metric-l">'+(saldo>=0?'Saldo':'Déficit')+'</div></div>'+
+    '</div>'+
+    '<div class="card"><div class="card-title"><i class="ti ti-plus"></i> Registrar egreso</div>'+
+      '<div class="grid3">'+
+        '<div class="form-row"><label>Fecha</label><input type="date" id="eg_f" value="'+tod+'" /></div>'+
+        '<div class="form-row"><label>Categoría</label><select id="eg_c">'+CAT_EGRESO.map(function(x){return '<option>'+x+'</option>';}).join('')+'</select></div>'+
+        '<div class="form-row"><label>Monto (S/)</label><input type="number" id="eg_m" placeholder="0.00" /></div>'+
+      '</div>'+
+      '<div class="grid2">'+
+        '<div class="form-row"><label>Descripción</label><input id="eg_d" placeholder="Ej: composite A2, 5 jeringas" /></div>'+
+        '<div class="form-row"><label>Método de pago</label><select id="eg_p"><option>Efectivo</option><option>Yape/Plin</option><option>Transferencia</option></select></div>'+
+      '</div>'+
+      '<button class="btn btn-primary" onclick="saveEgreso()"><i class="ti ti-device-floppy"></i> Guardar egreso</button>'+
+    '</div>'+
+    '<div class="card"><div class="card-title"><i class="ti ti-chart-pie"></i> Por categoría este mes</div>'+
+      (Object.keys(byCat).length===0?'<div style="font-size:12px;color:#ccc">Sin egresos este mes</div>':catRows)+
+    '</div>'+
+    '<div class="card"><div class="card-title"><i class="ti ti-history"></i> Historial</div>'+
+      (S.egresos.length===0?'<div style="font-size:12px;color:#ccc">Sin egresos registrados</div>':histRows)+
+    '</div>';
+}
+
+function saveEgreso(){
+  var f=document.getElementById('eg_f').value;
+  var m=parseFloat(document.getElementById('eg_m').value)||0;
+  if(!f||!m){alert('Fecha y monto requeridos');return;}
+  if(!S.egresos)S.egresos=[];
+  var eg={id:'EG'+Date.now(),fecha:f,categoria:document.getElementById('eg_c').value,monto:m.toFixed(2),descripcion:document.getElementById('eg_d').value||'Sin descripción',metodo:document.getElementById('eg_p').value};
+  S.egresos.push(eg);saveL();
+  showToast('Egreso registrado','#27ae60');
+  pgEgresos(document.getElementById('pageContent'));
+}
+
+// ═══════════════════════════════════════════════════════════
+// DEUDAS FIJAS
+// ═══════════════════════════════════════════════════════════
+function pgDeudas(c){
+  if(!S.deudas)S.deudas=[];
+  var totalDeuda=S.deudas.reduce(function(s,d){return s+(parseFloat(d.monto)||0)*(parseInt(d.pendientes)||0);},0);
+  var rows=S.deudas.map(function(d,i){
+    var pend=parseInt(d.pendientes)||0;
+    var monto=parseFloat(d.monto)||0;
+    return '<div class="ctrl-item">'+
+      '<div>'+
+        '<div style="font-weight:500;font-size:13px">'+d.nombre+'</div>'+
+        '<div style="font-size:10px;color:#bbb">S/ '+monto.toFixed(2)+'/mes - vence día '+d.dia+' - '+d.categoria+'</div>'+
+        (pend>0?'<div style="font-size:11px;color:var(--red);font-weight:500">'+pend+' mes(es) pendiente(s) - S/ '+(monto*pend).toFixed(2)+'</div>':'<div style="font-size:11px;color:var(--ok)">Al día</div>')+
+      '</div>'+
+      '<div style="display:flex;gap:5px">'+
+        (pend>0?'<button class="btn btn-primary btn-sm" onclick="pagarDeuda('+i+')">Pagar 1 mes</button>':'')+
+        '<button class="btn btn-sm" style="color:var(--warn);border-color:var(--warn)" onclick="masDeuda('+i+')">+1 mes</button>'+
+        '<button class="btn btn-sm" style="color:var(--red)" onclick="delDeuda('+i+')"><i class="ti ti-trash"></i></button>'+
+      '</div>'+
+    '</div>';
+  }).join('');
+  c.innerHTML=
+    '<div class="card" style="background:#fff8f8;border-color:#fca5a5"><div class="card-title" style="color:var(--red)"><i class="ti ti-alert-triangle"></i> Deuda total acumulada</div>'+
+      '<div style="font-size:28px;font-weight:300;color:var(--red)">S/ '+totalDeuda.toFixed(2)+'</div>'+
+    '</div>'+
+    '<div class="card"><div class="card-title"><i class="ti ti-plus"></i> Agregar gasto fijo</div>'+
+      '<div class="grid3">'+
+        '<div class="form-row"><label>Nombre</label><input id="df_n" placeholder="Ej: Alquiler" /></div>'+
+        '<div class="form-row"><label>Monto mensual (S/)</label><input type="number" id="df_m" /></div>'+
+        '<div class="form-row"><label>Categoría</label><select id="df_c">'+CAT_EGRESO.map(function(x){return '<option>'+x+'</option>';}).join('')+'</select></div>'+
+      '</div>'+
+      '<div class="grid2">'+
+        '<div class="form-row"><label>Día de vencimiento</label><input type="number" id="df_d" placeholder="1-31" /></div>'+
+        '<div class="form-row"><label>Meses pendientes</label><input type="number" id="df_p" value="0" /></div>'+
+      '</div>'+
+      '<button class="btn btn-primary" onclick="addDeuda()"><i class="ti ti-plus"></i> Guardar</button>'+
+    '</div>'+
+    '<div class="card"><div class="card-title">Gastos fijos ('+S.deudas.length+')</div>'+
+      (S.deudas.length===0?'<div style="font-size:12px;color:#ccc">Sin gastos fijos</div>':rows)+
+    '</div>';
+}
+
+function addDeuda(){
+  var n=document.getElementById('df_n').value.trim();
+  var m=parseFloat(document.getElementById('df_m').value)||0;
+  if(!n||!m){alert('Nombre y monto requeridos');return;}
+  if(!S.deudas)S.deudas=[];
+  S.deudas.push({id:'DF'+Date.now(),nombre:n,monto:m,categoria:document.getElementById('df_c').value,dia:parseInt(document.getElementById('df_d').value)||1,pendientes:parseInt(document.getElementById('df_p').value)||0});
+  saveL();showToast('Gasto fijo agregado','#27ae60');
+  pgDeudas(document.getElementById('pageContent'));
+}
+function pagarDeuda(i){
+  if(S.deudas[i].pendientes>0){
+    S.deudas[i].pendientes--;
+    if(!S.egresos)S.egresos=[];
+    S.egresos.push({id:'EG'+Date.now(),fecha:today(),categoria:S.deudas[i].categoria,monto:parseFloat(S.deudas[i].monto).toFixed(2),descripcion:'Pago: '+S.deudas[i].nombre,metodo:'Efectivo'});
+    saveL();showToast('Mes pagado registrado','#27ae60');
+    pgDeudas(document.getElementById('pageContent'));
+  }
+}
+function masDeuda(i){S.deudas[i].pendientes=(parseInt(S.deudas[i].pendientes)||0)+1;saveL();pgDeudas(document.getElementById('pageContent'));}
+function delDeuda(i){if(!confirm('Eliminar?'))return;S.deudas.splice(i,1);saveL();pgDeudas(document.getElementById('pageContent'));}
+
+// ═══════════════════════════════════════════════════════════
+// AGENDA
 // ═══════════════════════════════════════════════════════════
 function pgAgenda(c){
   if(!S.citas)S.citas=[];
-  const tod=today();
-  const citasHoy=S.citas.filter(ct=>ct.fecha===tod);
-  const proximas=S.citas.filter(ct=>ct.fecha>tod&&ct.estado==='pendiente').sort((a,b)=>a.fecha.localeCompare(b.fecha)).slice(0,10);
-  const pts=Object.values(S.patients);
-
+  var tod=today();
+  var pts=Object.values(S.patients);
+  var citasHoy=S.citas.filter(function(ct){return ct.fecha===tod;});
+  var proximas=S.citas.filter(function(ct){return ct.fecha>tod&&ct.estado==='pendiente';}).sort(function(a,b){return a.fecha.localeCompare(b.fecha);}).slice(0,10);
   c.innerHTML=
     '<div class="card"><div class="card-title"><i class="ti ti-calendar-plus"></i> Nueva cita</div>'+
       '<div class="grid3">'+
-        '<div class="form-row"><label>Paciente</label><select id="ct_p"><option value="">-- seleccionar --</option>'+pts.map(p=>'<option value="'+p.id+'">'+p.nombre+'</option>').join('')+'</select></div>'+
+        '<div class="form-row"><label>Paciente</label><select id="ct_p"><option value="">-- seleccionar --</option>'+pts.map(function(p){return '<option value="'+p.id+'">'+p.nombre+'</option>';}).join('')+'</select></div>'+
         '<div class="form-row"><label>Fecha</label><input type="date" id="ct_f" value="'+tod+'" /></div>'+
         '<div class="form-row"><label>Hora</label><input type="time" id="ct_h" value="09:00" /></div>'+
       '</div>'+
       '<div class="grid2">'+
         '<div class="form-row"><label>Procedimiento</label><input id="ct_pr" placeholder="Ej: Limpieza, Extracción..." /></div>'+
-        '<div class="form-row"><label>Profesional</label><select id="ct_op">'+S.profesionales.map(p=>'<option>'+p+'</option>').join('')+'</select></div>'+
+        '<div class="form-row"><label>Profesional</label><select id="ct_op">'+S.profesionales.map(function(p){return '<option>'+p+'</option>';}).join('')+'</select></div>'+
       '</div>'+
-      '<div class="form-row"><label>Notas</label><input id="ct_n" placeholder="Observaciones adicionales..." /></div>'+
-      '<button class="btn btn-primary" onclick="saveCita()"><i class="ti ti-device-floppy"></i> Agendar cita</button>'+
+      '<button class="btn btn-primary" onclick="saveCita()"><i class="ti ti-device-floppy"></i> Agendar</button>'+
     '</div>'+
-    '<div class="card" style="'+(citasHoy.length>0?'border-color:var(--tq)':'')+'">'+
-      '<div class="card-title"><i class="ti ti-clock"></i> Hoy — '+fd(tod)+' ('+citasHoy.length+' cita(s))</div>'+
-      (citasHoy.length===0?'<div style="font-size:12px;color:#ccc">Sin citas para hoy</div>':
-        citasHoy.sort((a,b)=>a.hora.localeCompare(b.hora)).map(ct=>citaRow(ct)).join(''))+
+    '<div class="card"><div class="card-title"><i class="ti ti-clock"></i> Hoy ('+citasHoy.length+')</div>'+
+      (citasHoy.length===0?'<div style="font-size:12px;color:#ccc">Sin citas hoy</div>':citasHoy.sort(function(a,b){return a.hora.localeCompare(b.hora);}).map(function(ct){return renderCita(ct);}).join(''))+
     '</div>'+
     '<div class="card"><div class="card-title"><i class="ti ti-calendar-event"></i> Próximas citas</div>'+
-      (proximas.length===0?'<div style="font-size:12px;color:#ccc">Sin citas programadas</div>':
-        proximas.map(ct=>citaRow(ct)).join(''))+
+      (proximas.length===0?'<div style="font-size:12px;color:#ccc">Sin citas próximas</div>':proximas.map(function(ct){return renderCita(ct);}).join(''))+
     '</div>';
 }
 
-function citaRow(ct){
-  const p=S.patients[ct.pacienteId];
-  const btns=ct.estado==='pendiente'?
-    '<button class="btn btn-primary btn-sm" onclick="marcarCita(''+ct.id+'','atendido')">Atendido</button>'+
-    '<button class="btn btn-sm" style="color:var(--red);border-color:#fca5a5" onclick="marcarCita(''+ct.id+'','cancelado')">Cancelar</button>'
-    :'<span class="badge '+(ct.estado==='atendido'?'bg':'bd')+'">'+ct.estado+'</span>';
+function renderCita(ct){
+  var p=S.patients[ct.pacienteId];
+  var nombre=p?p.nombre:ct.pacienteId;
+  var cid=ct.id;
+  var acciones=ct.estado==='pendiente'?
+    '<button class="btn btn-primary btn-sm" data-id="'+cid+'" data-est="atendido" onclick="accionCitaBtn(this)">Atendido</button>'+
+    '<button class="btn btn-sm" style="color:var(--red);border-color:#fca5a5" data-id="'+cid+'" data-est="cancelado" onclick="accionCitaBtn(this)">Cancelar</button>':
+    '<span class="badge '+(ct.estado==='atendido'?'bg':'bd')+'">'+ct.estado+'</span>';
   return '<div class="ctrl-item">'+
-    '<div>'+
-      '<div style="font-weight:500;font-size:13px">'+(p?p.nombre:ct.pacienteId)+'</div>'+
-      '<div style="font-size:10px;color:#aaa">'+fd(ct.fecha)+' '+ct.hora+' &middot; '+ct.procedimiento+' &middot; '+ct.operador+'</div>'+
-      (ct.notas?'<div style="font-size:10px;color:#bbb">'+ct.notas+'</div>':'')+
-    '</div>'+
-    '<div style="display:flex;gap:5px;align-items:center">'+btns+'</div>'+
+    '<div><div style="font-weight:500;font-size:13px">'+nombre+'</div>'+
+    '<div style="font-size:10px;color:#aaa">'+fd(ct.fecha)+' '+ct.hora+' - '+ct.procedimiento+' - '+ct.operador+'</div></div>'+
+    '<div style="display:flex;gap:5px">'+acciones+'</div>'+
   '</div>';
 }
 
 function saveCita(){
-  const pid=document.getElementById('ct_p').value;
-  const f=document.getElementById('ct_f').value;
-  const h=document.getElementById('ct_h').value;
-  const pr=document.getElementById('ct_pr').value.trim();
+  var pid=document.getElementById('ct_p').value;
+  var f=document.getElementById('ct_f').value;
+  var pr=document.getElementById('ct_pr').value.trim();
   if(!pid||!f||!pr){alert('Paciente, fecha y procedimiento requeridos');return;}
   if(!S.citas)S.citas=[];
-  const ct={id:'CT'+Date.now(),pacienteId:pid,fecha:f,hora:h,procedimiento:pr,operador:document.getElementById('ct_op').value,notas:document.getElementById('ct_n').value,estado:'pendiente'};
-  S.citas.push(ct);
-  saveL();
-  showToast('✓ Cita agendada para '+fd(f)+' '+h,'#27ae60');
+  S.citas.push({id:'CT'+Date.now(),pacienteId:pid,fecha:f,hora:document.getElementById('ct_h').value,procedimiento:pr,operador:document.getElementById('ct_op').value,estado:'pendiente'});
+  saveL();showToast('Cita agendada','#27ae60');
   pgAgenda(document.getElementById('pageContent'));
 }
 
-function marcarCita(id,est){
+function accionCitaBtn(btn){accionCita(btn.dataset.id, btn.dataset.est);}
+function accionCita(id,est){
   if(!S.citas)return;
-  const i=S.citas.findIndex(ct=>ct.id===id);
+  var i=S.citas.findIndex(function(ct){return ct.id===id;});
   if(i>=0)S.citas[i].estado=est;
-  saveL();
-  showToast(est==='atendido'?'✓ Cita atendida':'Cita cancelada',est==='atendido'?'#27ae60':'#e67e22');
+  saveL();showToast(est==='atendido'?'Cita atendida':'Cita cancelada',est==='atendido'?'#27ae60':'#e67e22');
   pgAgenda(document.getElementById('pageContent'));
 }
 
 // ═══════════════════════════════════════════════════════════
-// KÁRDEX DE MATERIALES
+// KARDEX
 // ═══════════════════════════════════════════════════════════
-const CAT_MAT=['Composite/Resina','Anestesia','Agujas/Jeringa','Instrumental desechable','Materiales de impresión','Cemento dental','Hilo de sutura','Guantes/Mascarillas','Desinfectantes','Radiografías','Otros'];
+var CAT_MAT=['Composite/Resina','Anestesia','Agujas/Jeringa','Desechables','Impresión','Cemento','Sutura','Guantes/Mascarillas','Desinfectantes','Radiografías','Otros'];
 
 function pgKardex(c){
   if(!S.kardex)S.kardex=[];
-  const bajoStock=S.kardex.filter(m=>parseInt(m.cantidad)<=parseInt(m.minimo));
+  var bajoStock=S.kardex.filter(function(m){return parseInt(m.cantidad)<=parseInt(m.minimo);});
+  var tabla=S.kardex.length===0?'<div style="font-size:12px;color:#ccc">Sin materiales registrados</div>':
+    '<table style="width:100%;font-size:12px;border-collapse:collapse">'+
+    '<tr style="font-size:10px;color:#bbb;border-bottom:1px solid var(--gl)"><td style="padding:6px 4px">Material</td><td>Categoría</td><td>Stock</td><td>Mín.</td><td>Precio</td><td>Ajustar</td></tr>'+
+    S.kardex.map(function(m,i){
+      var bg=parseInt(m.cantidad)<=parseInt(m.minimo)?'background:#fff8f8':'';
+      var badge=parseInt(m.cantidad)===0?'bd':parseInt(m.cantidad)<=parseInt(m.minimo)?'bw':'bg';
+      return '<tr style="border-bottom:1px solid var(--gl);'+bg+'">'+
+        '<td style="padding:7px 4px;font-weight:500">'+m.nombre+'</td>'+
+        '<td style="color:#aaa;font-size:10px">'+m.categoria+'</td>'+
+        '<td><span class="badge '+badge+'">'+m.cantidad+' '+m.unidad+'</span></td>'+
+        '<td style="color:#bbb">'+m.minimo+'</td>'+
+        '<td>S/ '+(parseFloat(m.precio)||0).toFixed(2)+'</td>'+
+        '<td><button class="btn btn-sm" style="color:var(--ok);border-color:var(--ok)" onclick="ajusteKardex('+i+',1)">+1</button> '+
+        '<button class="btn btn-sm" style="color:var(--red);border-color:#fca5a5" onclick="ajusteKardex('+i+',-1)">-1</button> '+
+        '<button class="btn btn-sm" onclick="delKardex('+i+')"><i class="ti ti-trash"></i></button></td>'+
+      '</tr>';
+    }).join('')+'</table>';
   c.innerHTML=
-    (bajoStock.length>0?'<div style="background:#fef0f0;border:1px solid #fca5a5;border-radius:10px;padding:11px 16px;margin-bottom:14px;display:flex;align-items:center;gap:12px">'+
-      '<i class="ti ti-alert-circle" style="color:var(--red);font-size:18px;flex-shrink:0"></i>'+
-      '<div style="font-size:12px;color:var(--red);font-weight:500">'+bajoStock.length+' material(es) con stock bajo o agotado: '+bajoStock.map(m=>m.nombre).join(', ')+'</div>'+
-    '</div>':'')+
+    (bajoStock.length>0?'<div style="background:#fef0f0;border:1px solid #fca5a5;border-radius:10px;padding:11px 16px;margin-bottom:14px"><i class="ti ti-alert-circle" style="color:var(--red)"></i> <strong style="color:var(--red)">Stock bajo:</strong> '+bajoStock.map(function(m){return m.nombre;}).join(', ')+'</div>':'')+
     '<div class="card"><div class="card-title"><i class="ti ti-plus"></i> Agregar material</div>'+
       '<div class="grid3">'+
-        '<div class="form-row"><label>Nombre del material</label><input id="km_n" placeholder="Ej: Composite A2 Filtek" /></div>'+
-        '<div class="form-row"><label>Categoría</label><select id="km_c">'+CAT_MAT.map(c=>'<option>'+c+'</option>').join('')+'</select></div>'+
-        '<div class="form-row"><label>Unidad</label><input id="km_u" placeholder="Ej: jeringa, caja, frasco" /></div>'+
+        '<div class="form-row"><label>Nombre</label><input id="km_n" placeholder="Ej: Composite A2 Filtek" /></div>'+
+        '<div class="form-row"><label>Categoría</label><select id="km_c">'+CAT_MAT.map(function(x){return '<option>'+x+'</option>';}).join('')+'</select></div>'+
+        '<div class="form-row"><label>Unidad</label><input id="km_u" placeholder="jeringa, caja..." /></div>'+
       '</div>'+
       '<div class="grid3">'+
-        '<div class="form-row"><label>Cantidad actual</label><input type="number" id="km_q" value="0" min="0" /></div>'+
-        '<div class="form-row"><label>Stock mínimo (alerta)</label><input type="number" id="km_m" value="2" min="0" /></div>'+
+        '<div class="form-row"><label>Cantidad</label><input type="number" id="km_q" value="0" /></div>'+
+        '<div class="form-row"><label>Stock mínimo</label><input type="number" id="km_m" value="2" /></div>'+
         '<div class="form-row"><label>Precio unitario (S/)</label><input type="number" id="km_p" placeholder="0.00" /></div>'+
       '</div>'+
-      '<button class="btn btn-primary" onclick="saveMaterial()"><i class="ti ti-device-floppy"></i> Guardar</button>'+
+      '<button class="btn btn-primary" onclick="addKardex()"><i class="ti ti-device-floppy"></i> Guardar</button>'+
     '</div>'+
-    '<div class="card"><div class="card-title"><i class="ti ti-box"></i> Inventario ('+S.kardex.length+' items)</div>'+
-      (S.kardex.length===0?'<div style="font-size:12px;color:#ccc">Sin materiales registrados</div>':
-        '<table style="width:100%;font-size:12px;border-collapse:collapse">'+
-        '<tr style="font-size:10px;color:#bbb;border-bottom:1px solid var(--gl)"><td style="padding:6px 4px">Material</td><td>Categoría</td><td>Cantidad</td><td>Mínimo</td><td>Precio</td><td>Acciones</td></tr>'+
-        S.kardex.map((m,i)=>
-          '<tr style="border-bottom:1px solid var(--gl);background:'+(parseInt(m.cantidad)<=parseInt(m.minimo)?'#fff8f8':'')+'">'+
-            '<td style="padding:7px 4px;font-weight:500">'+m.nombre+'</td>'+
-            '<td style="color:#aaa;font-size:10px">'+m.categoria+'</td>'+
-            '<td><span class="badge '+(parseInt(m.cantidad)===0?'bd':parseInt(m.cantidad)<=parseInt(m.minimo)?'bw':'bg')+'">'+m.cantidad+' '+m.unidad+'</span></td>'+
-            '<td style="color:#bbb">'+m.minimo+'</td>'+
-            '<td style="color:#888">S/ '+(parseFloat(m.precio)||0).toFixed(2)+'</td>'+
-            '<td style="display:flex;gap:4px;padding:4px 0">'+
-              '<button class="btn btn-sm" style="color:var(--ok);border-color:var(--ok)" onclick="ajustarStock('+i+',1)">+1</button>'+
-              '<button class="btn btn-sm" style="color:var(--red);border-color:#fca5a5" onclick="ajustarStock('+i+',-1)">-1</button>'+
-              '<button class="btn btn-sm" style="color:var(--red)" onclick="delMaterial('+i+')"><i class="ti ti-trash"></i></button>'+
-            '</td>'+
-          '</tr>'
-        ).join('')+
-        '</table>')+
-    '</div>';
+    '<div class="card"><div class="card-title"><i class="ti ti-box"></i> Inventario ('+S.kardex.length+')</div>'+tabla+'</div>';
 }
 
-function saveMaterial(){
-  const n=document.getElementById('km_n').value.trim();
+function addKardex(){
+  var n=document.getElementById('km_n').value.trim();
   if(!n){alert('Nombre requerido');return;}
   if(!S.kardex)S.kardex=[];
   S.kardex.push({id:'KM'+Date.now(),nombre:n,categoria:document.getElementById('km_c').value,unidad:document.getElementById('km_u').value||'unidad',cantidad:parseInt(document.getElementById('km_q').value)||0,minimo:parseInt(document.getElementById('km_m').value)||2,precio:parseFloat(document.getElementById('km_p').value)||0});
-  saveL();
-  showToast('✓ Material agregado','#27ae60');
+  saveL();showToast('Material agregado','#27ae60');
   pgKardex(document.getElementById('pageContent'));
 }
-
-function ajustarStock(i,delta){
-  const nuevo=parseInt(S.kardex[i].cantidad)+delta;
-  S.kardex[i].cantidad=Math.max(0,nuevo);
-  saveL();
-  if(S.kardex[i].cantidad<=S.kardex[i].minimo)showToast('⚠ Stock bajo: '+S.kardex[i].nombre,'#e67e22');
-  pgKardex(document.getElementById('pageContent'));
-}
-
-function delMaterial(i){
-  if(!confirm('¿Eliminar este material?'))return;
-  S.kardex.splice(i,1);
-  saveL();
-  pgKardex(document.getElementById('pageContent'));
-}
+function ajusteKardex(i,d){S.kardex[i].cantidad=Math.max(0,parseInt(S.kardex[i].cantidad)+d);saveL();if(S.kardex[i].cantidad<=S.kardex[i].minimo)showToast('Stock bajo: '+S.kardex[i].nombre,'#e67e22');pgKardex(document.getElementById('pageContent'));}
+function delKardex(i){if(!confirm('Eliminar?'))return;S.kardex.splice(i,1);saveL();pgKardex(document.getElementById('pageContent'));}
 
 // ═══════════════════════════════════════════════════════════
-// EQUIPOS Y MANTENIMIENTO
+// EQUIPOS
 // ═══════════════════════════════════════════════════════════
 function pgEquipos(c){
   if(!S.equipos)S.equipos=[];
-  const tod=today();
-  const vencidos=S.equipos.filter(e=>e.proxMant&&e.proxMant<=tod&&e.proxMant!=='');
+  var tod=today();
+  var venc=S.equipos.filter(function(e){return e.proxMant&&e.proxMant<=tod;});
+  var rows=S.equipos.map(function(e,i){
+    var v=e.proxMant&&e.proxMant<=tod;
+    return '<div class="ctrl-item" style="'+(v?'background:#fffbf0':'')+'">'+
+      '<div>'+
+        '<div style="font-weight:500;font-size:13px">'+e.nombre+'</div>'+
+        '<div style="font-size:10px;color:#bbb">'+e.marca+(e.serie?' - N'+e.serie:'')+'</div>'+
+        '<div style="font-size:10px;color:#aaa">Último mant: '+(e.ultMant?fd(e.ultMant):'--')+' - Próximo: <strong style="color:'+(v?'var(--red)':'var(--tq)')+'">'+fd(e.proxMant)+'</strong></div>'+
+      '</div>'+
+      '<div style="display:flex;gap:5px">'+
+        '<button class="btn btn-primary btn-sm" onclick="manttoEquipo('+i+')">Mant. hecho</button>'+
+        '<button class="btn btn-sm" style="color:var(--red)" onclick="delEquipo('+i+')"><i class="ti ti-trash"></i></button>'+
+      '</div>'+
+    '</div>';
+  }).join('');
   c.innerHTML=
-    (vencidos.length>0?'<div style="background:#fff8ed;border:1px solid #fdba74;border-radius:10px;padding:11px 16px;margin-bottom:14px;display:flex;align-items:center;gap:12px">'+
-      '<i class="ti ti-tool" style="color:var(--warn);font-size:18px;flex-shrink:0"></i>'+
-      '<div style="font-size:12px;color:#a05c00;font-weight:500">'+vencidos.length+' equipo(s) con mantenimiento vencido: '+vencidos.map(e=>e.nombre).join(', ')+'</div>'+
-    '</div>':'')+
+    (venc.length>0?'<div style="background:#fff8ed;border:1px solid #fdba74;border-radius:10px;padding:11px 16px;margin-bottom:14px"><strong style="color:#a05c00">Mantenimiento vencido:</strong> '+venc.map(function(e){return e.nombre;}).join(', ')+'</div>':'')+
     '<div class="card"><div class="card-title"><i class="ti ti-plus"></i> Registrar equipo</div>'+
       '<div class="grid3">'+
-        '<div class="form-row"><label>Nombre del equipo</label><input id="eq_n" placeholder="Ej: Unidad dental, Autoclave" /></div>'+
-        '<div class="form-row"><label>Marca / Modelo</label><input id="eq_m" placeholder="Ej: Castellini, Midmark" /></div>'+
-        '<div class="form-row"><label>N° Serie / Código</label><input id="eq_s" placeholder="Opcional" /></div>'+
+        '<div class="form-row"><label>Nombre del equipo</label><input id="eq_n" placeholder="Ej: Unidad dental" /></div>'+
+        '<div class="form-row"><label>Marca / Modelo</label><input id="eq_m" placeholder="Ej: Castellini" /></div>'+
+        '<div class="form-row"><label>N Serie</label><input id="eq_s" placeholder="Opcional" /></div>'+
       '</div>'+
       '<div class="grid3">'+
-        '<div class="form-row"><label>Fecha de compra</label><input type="date" id="eq_fc" /></div>'+
+        '<div class="form-row"><label>Fecha compra</label><input type="date" id="eq_fc" /></div>'+
         '<div class="form-row"><label>Último mantenimiento</label><input type="date" id="eq_um" /></div>'+
         '<div class="form-row"><label>Próximo mantenimiento</label><input type="date" id="eq_pm" /></div>'+
       '</div>'+
-      '<div class="form-row"><label>Observaciones</label><input id="eq_o" placeholder="Estado, garantía, proveedor..." /></div>'+
-      '<button class="btn btn-primary" onclick="saveEquipo()"><i class="ti ti-device-floppy"></i> Guardar equipo</button>'+
+      '<div class="form-row"><label>Observaciones</label><input id="eq_o" /></div>'+
+      '<button class="btn btn-primary" onclick="addEquipo()"><i class="ti ti-device-floppy"></i> Guardar</button>'+
     '</div>'+
-    '<div class="card"><div class="card-title"><i class="ti ti-tool"></i> Equipos registrados ('+S.equipos.length+')</div>'+
-      (S.equipos.length===0?'<div style="font-size:12px;color:#ccc">Sin equipos registrados</div>':
-        S.equipos.map((e,i)=>{
-          const venc=e.proxMant&&e.proxMant<=tod;
-          return '<div class="ctrl-item" style="'+(venc?'background:#fffbf0':'')+'">'+
-            '<div>'+
-              '<div style="font-weight:500;font-size:13px">'+e.nombre+'</div>'+
-              '<div style="font-size:10px;color:#bbb">'+e.marca+(e.serie?' · N°'+e.serie:'')+'</div>'+
-              '<div style="font-size:10px;color:#aaa;margin-top:2px">'+
-                'Último mant: '+(e.ultMant?fd(e.ultMant):'--')+' &nbsp;·&nbsp; '+
-                'Próximo: <strong style="color:'+(venc?'var(--red)':'var(--tq)')+'">'+fd(e.proxMant)+'</strong>'+
-              '</div>'+
-              (e.obs?'<div style="font-size:10px;color:#bbb">'+e.obs+'</div>':'')+
-            '</div>'+
-            '<div style="display:flex;gap:5px">'+
-              '<button class="btn btn-primary btn-sm" onclick="mantEquipo('+i+')">Mantenimiento hecho</button>'+
-              '<button class="btn btn-sm" style="color:var(--red)" onclick="delEquipo('+i+')"><i class="ti ti-trash"></i></button>'+
-            '</div>'+
-          '</div>';
-        }).join(''))+
+    '<div class="card"><div class="card-title"><i class="ti ti-tool"></i> Equipos ('+S.equipos.length+')</div>'+
+      (S.equipos.length===0?'<div style="font-size:12px;color:#ccc">Sin equipos registrados</div>':rows)+
     '</div>';
 }
 
-function saveEquipo(){
-  const n=document.getElementById('eq_n').value.trim();
+function addEquipo(){
+  var n=document.getElementById('eq_n').value.trim();
   if(!n){alert('Nombre requerido');return;}
   if(!S.equipos)S.equipos=[];
-  S.equipos.push({id:'EQ'+Date.now(),nombre:n,marca:document.getElementById('eq_m').value,serie:document.getElementById('eq_s').value,fechaCompra:document.getElementById('eq_fc').value,ultMant:document.getElementById('eq_um').value,proxMant:document.getElementById('eq_pm').value,obs:document.getElementById('eq_o').value});
-  saveL();
-  showToast('✓ Equipo registrado','#27ae60');
+  S.equipos.push({id:'EQ'+Date.now(),nombre:n,marca:document.getElementById('eq_m').value,serie:document.getElementById('eq_s').value,ultMant:document.getElementById('eq_um').value,proxMant:document.getElementById('eq_pm').value,obs:document.getElementById('eq_o').value});
+  saveL();showToast('Equipo registrado','#27ae60');
   pgEquipos(document.getElementById('pageContent'));
 }
-
-function mantEquipo(i){
-  const hoy=today();
-  const d=new Date(hoy);d.setMonth(d.getMonth()+6);
-  S.equipos[i].ultMant=hoy;
+function manttoEquipo(i){
+  var d=new Date(today());d.setMonth(d.getMonth()+6);
+  S.equipos[i].ultMant=today();
   S.equipos[i].proxMant=d.toISOString().split('T')[0];
-  saveL();
-  showToast('✓ Mantenimiento registrado. Próximo en 6 meses','#27ae60');
+  saveL();showToast('Mantenimiento registrado. Próximo en 6 meses','#27ae60');
   pgEquipos(document.getElementById('pageContent'));
 }
-
-function delEquipo(i){
-  if(!confirm('¿Eliminar este equipo?'))return;
-  S.equipos.splice(i,1);
-  saveL();
-  pgEquipos(document.getElementById('pageContent'));
-}
+function delEquipo(i){if(!confirm('Eliminar?'))return;S.equipos.splice(i,1);saveL();pgEquipos(document.getElementById('pageContent'));}
 
 // ═══════════════════════════════════════════════════════════
-// CONSENTIMIENTOS INFORMADOS
+// CONSENTIMIENTOS
 // ═══════════════════════════════════════════════════════════
-const CONSENT_TIPOS={
-  'Extracción simple':'Yo, el/la paciente abajo firmante, autorizo al profesional tratante a realizar la extracción del/los diente(s) indicado(s). Declaro haber sido informado/a sobre el procedimiento, riesgos (sangrado, infección, dolor postoperatorio), y cuidados posteriores.',
-  'Extracción de terceros molares':'Autorizo la extracción quirúrgica del/los tercer(os) molar(es). Declaro haber sido informado/a sobre los riesgos específicos: parestesia temporal, trismus, alveolitis, y posibles complicaciones.',
-  'Endodoncia':'Autorizo el tratamiento de conductos radiculares. Declaro conocer que el procedimiento puede requerir múltiples sesiones y que el diente tratado puede requerir una corona posterior.',
-  'Implante dental':'Autorizo la colocación de implante(s) oseointegrado(s). Declaro haber sido informado/a sobre el proceso, tiempo de oseointegración, cuidados y posibles complicaciones.',
-  'Ortodoncia':'Autorizo el tratamiento ortodóntico. Declaro conocer la duración estimada, la necesidad de cooperación en el uso de aparatos y retención posterior.',
-  'Cirugía periodontal':'Autorizo la cirugía periodontal indicada. Declaro haber sido informado/a sobre el procedimiento, cuidados postoperatorios y posibles complicaciones.',
-  'Blanqueamiento dental':'Autorizo el tratamiento de blanqueamiento dental. Declaro conocer que puede causar sensibilidad temporal y que los resultados varían según el caso.',
+var CONSENT_TIPOS={
+  'Extracción simple':'Autorizo al profesional tratante a realizar la extracción del/los diente(s) indicado(s). Declaro haber sido informado/a sobre el procedimiento, riesgos (sangrado, infección, dolor postoperatorio) y cuidados posteriores.',
+  'Extracción tercer molar':'Autorizo la extracción quirúrgica del/los tercer(os) molar(es). Declaro conocer los riesgos específicos: parestesia temporal, trismus, alveolitis y posibles complicaciones.',
+  'Endodoncia':'Autorizo el tratamiento de conductos radiculares. Declaro conocer que puede requerir múltiples sesiones y que el diente tratado puede necesitar corona posterior.',
+  'Implante dental':'Autorizo la colocación de implante(s) oseointegrado(s). Declaro conocer el proceso, tiempo de oseointegración, cuidados y posibles complicaciones.',
+  'Ortodoncia':'Autorizo el tratamiento ortodóntico. Declaro conocer la duración estimada, necesidad de cooperación y retención posterior.',
+  'Cirugía periodontal':'Autorizo la cirugía periodontal indicada. Declaro conocer el procedimiento, cuidados postoperatorios y posibles complicaciones.',
+  'Blanqueamiento dental':'Autorizo el tratamiento de blanqueamiento. Declaro conocer que puede causar sensibilidad temporal y que los resultados varían.'
 };
 
 function pgConsentimientos(c){
   if(!S.consentimientos)S.consentimientos=[];
-  const pts=Object.values(S.patients);
+  var pts=Object.values(S.patients);
+  var hist=[...S.consentimientos].reverse().map(function(cs){
+    return '<div class="ctrl-item"><div><div style="font-weight:500">'+cs.paciente+'</div><div style="font-size:10px;color:#bbb">'+cs.tipo+' - '+fd(cs.fecha)+' - '+cs.profesional+'</div></div><span class="badge bg">Firmado</span></div>';
+  }).join('');
   c.innerHTML=
     '<div class="card"><div class="card-title"><i class="ti ti-file-check"></i> Generar consentimiento</div>'+
       '<div class="grid2">'+
-        '<div class="form-row"><label>Paciente</label><select id="cs_p"><option value="">-- seleccionar --</option>'+pts.map(p=>'<option value="'+p.id+'">'+p.nombre+'</option>').join('')+'</select></div>'+
-        '<div class="form-row"><label>Tipo de procedimiento</label><select id="cs_t">'+Object.keys(CONSENT_TIPOS).map(k=>'<option>'+k+'</option>').join('')+'</select></div>'+
+        '<div class="form-row"><label>Paciente</label><select id="cs_p"><option value="">-- seleccionar --</option>'+pts.map(function(p){return '<option value="'+p.id+'">'+p.nombre+'</option>';}).join('')+'</select></div>'+
+        '<div class="form-row"><label>Procedimiento</label><select id="cs_t">'+Object.keys(CONSENT_TIPOS).map(function(k){return '<option>'+k+'</option>';}).join('')+'</select></div>'+
       '</div>'+
-      '<div class="form-row"><label>Profesional tratante</label><select id="cs_op">'+S.profesionales.map(p=>'<option>'+p+'</option>').join('')+'</select></div>'+
+      '<div class="form-row"><label>Profesional</label><select id="cs_op">'+S.profesionales.map(function(p){return '<option>'+p+'</option>';}).join('')+'</select></div>'+
       '<div style="display:flex;gap:8px;margin-top:4px">'+
-        '<button class="btn btn-primary" onclick="genConsentimiento()"><i class="ti ti-printer"></i> Generar e imprimir</button>'+
-        '<button class="btn" onclick="saveConsentimiento()"><i class="ti ti-device-floppy"></i> Guardar registro</button>'+
+        '<button class="btn btn-primary" onclick="imprimirConsentimiento()"><i class="ti ti-printer"></i> Generar e imprimir</button>'+
+        '<button class="btn" onclick="guardarConsentimiento()"><i class="ti ti-device-floppy"></i> Guardar registro</button>'+
       '</div>'+
     '</div>'+
-    '<div class="card"><div class="card-title"><i class="ti ti-history"></i> Consentimientos firmados ('+S.consentimientos.length+')</div>'+
-      (S.consentimientos.length===0?'<div style="font-size:12px;color:#ccc">Sin registros</div>':
-        [...S.consentimientos].reverse().map(cs=>
-          '<div class="ctrl-item">'+
-            '<div><div style="font-weight:500">'+cs.paciente+'</div>'+
-            '<div style="font-size:10px;color:#bbb">'+cs.tipo+' · '+fd(cs.fecha)+' · '+cs.profesional+'</div></div>'+
-            '<span class="badge bg">Firmado</span>'+
-          '</div>'
-        ).join(''))+
+    '<div class="card"><div class="card-title"><i class="ti ti-history"></i> Firmados ('+S.consentimientos.length+')</div>'+
+      (S.consentimientos.length===0?'<div style="font-size:12px;color:#ccc">Sin registros</div>':hist)+
     '</div>';
 }
 
-function genConsentimiento(){
-  const pid=document.getElementById('cs_p').value;
-  const tipo=document.getElementById('cs_t').value;
+function imprimirConsentimiento(){
+  var pid=document.getElementById('cs_p').value;
+  var tipo=document.getElementById('cs_t').value;
   if(!pid){alert('Selecciona un paciente');return;}
-  const p=S.patients[pid];
-  const prof=document.getElementById('cs_op').value;
-  const texto=CONSENT_TIPOS[tipo]||'';
-  const w=window.open('','_blank');
-  w.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8">
-  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500&display=swap" rel="stylesheet">
-  <style>body{font-family:Montserrat,sans-serif;padding:40px;max-width:600px;margin:0 auto;color:#4A4A4A;font-size:13px;line-height:1.7}
-  h1{font-size:20px;font-weight:300;color:#00AFC1;letter-spacing:4px;text-align:center;margin-bottom:4px}
-  .sub{font-size:8px;color:#ccc;letter-spacing:3px;text-transform:uppercase;text-align:center;margin-bottom:20px}
-  h2{font-size:13px;font-weight:500;text-transform:uppercase;letter-spacing:1px;margin:20px 0 10px}
-  .field{border-bottom:1px solid #eee;margin-bottom:8px;padding-bottom:4px}
-  .sign-row{display:grid;grid-template-columns:1fr 1fr;gap:30px;margin-top:50px}
-  .sign-line{border-top:1px solid #333;padding-top:6px;font-size:11px;color:#aaa;text-align:center}
-  @media print{button{display:none}}</style></head><body>
-  <h1>DENTALYS</h1><div class="sub">Consentimiento Informado</div>
-  <h2>Datos del paciente</h2>
-  <div class="field"><strong>Nombre:</strong> ${p.nombre}</div>
-  <div class="field"><strong>DNI:</strong> ${p.dni||'--'}</div>
-  <div class="field"><strong>Fecha de nacimiento:</strong> ${p.fechaNac?p.fechaNac:'--'}</div>
-  <div class="field"><strong>Procedimiento:</strong> ${tipo}</div>
-  <div class="field"><strong>Fecha:</strong> ${new Date().toLocaleDateString('es-PE',{day:'numeric',month:'long',year:'numeric'})}</div>
-  <h2>Declaración de consentimiento</h2>
-  <p>${texto}</p>
-  <p style="margin-top:16px">Habiendo sido informado/a de manera clara y comprensible, doy mi consentimiento libre y voluntario para la realización del procedimiento descrito.</p>
-  <div class="sign-row">
-    <div><div style="height:60px"></div><div class="sign-line">Firma del paciente / apoderado<br>${p.nombre}</div></div>
-    <div><div style="height:60px"></div><div class="sign-line">Firma del profesional<br>${prof}</div></div>
-  </div>
-  <br><br><button onclick="window.print()" style="padding:10px 20px;background:#00AFC1;color:#fff;border:none;border-radius:8px;cursor:pointer;font-family:Montserrat,sans-serif">🖨 Imprimir</button>
-  </body></html>`);
+  var p=S.patients[pid];
+  var prof=document.getElementById('cs_op').value;
+  var texto=CONSENT_TIPOS[tipo]||'';
+  var fecha=new Date().toLocaleDateString('es-PE',{day:'numeric',month:'long',year:'numeric'});
+  var html='<!DOCTYPE html><html><head><meta charset="UTF-8">'+
+    '<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500&display=swap" rel="stylesheet">'+
+    '<style>body{font-family:Montserrat,sans-serif;padding:40px;max-width:600px;margin:0 auto;color:#4A4A4A;font-size:13px;line-height:1.7}'+
+    'h1{font-size:20px;font-weight:300;color:#00AFC1;letter-spacing:4px;text-align:center}'+
+    '.sub{font-size:8px;color:#ccc;letter-spacing:3px;text-transform:uppercase;text-align:center;margin-bottom:20px}'+
+    'h2{font-size:13px;font-weight:500;text-transform:uppercase;letter-spacing:1px;margin:20px 0 10px}'+
+    '.field{border-bottom:1px solid #eee;margin-bottom:8px;padding-bottom:4px}'+
+    '.sign-row{display:grid;grid-template-columns:1fr 1fr;gap:30px;margin-top:50px}'+
+    '.sign-line{border-top:1px solid #333;padding-top:6px;font-size:11px;color:#aaa;text-align:center}'+
+    '@media print{button{display:none}}</style></head><body>'+
+    '<h1>DENTALYS</h1><div class="sub">Consentimiento Informado</div>'+
+    '<h2>Datos del paciente</h2>'+
+    '<div class="field"><strong>Nombre:</strong> '+p.nombre+'</div>'+
+    '<div class="field"><strong>DNI:</strong> '+(p.dni||'--')+'</div>'+
+    '<div class="field"><strong>Procedimiento:</strong> '+tipo+'</div>'+
+    '<div class="field"><strong>Fecha:</strong> '+fecha+'</div>'+
+    '<h2>Declaración de consentimiento</h2>'+
+    '<p>'+texto+'</p>'+
+    '<p style="margin-top:16px">Habiendo sido informado/a, doy mi consentimiento libre y voluntario para la realización del procedimiento.</p>'+
+    '<div class="sign-row">'+
+      '<div><div style="height:60px"></div><div class="sign-line">Firma paciente<br>'+p.nombre+'</div></div>'+
+      '<div><div style="height:60px"></div><div class="sign-line">Firma profesional<br>'+prof+'</div></div>'+
+    '</div>'+
+    '<br><button onclick="window.print()" style="padding:10px 20px;background:#00AFC1;color:#fff;border:none;border-radius:8px;cursor:pointer;font-family:Montserrat,sans-serif">Imprimir</button>'+
+    '</body></html>';
+  var w=window.open('','_blank');
+  w.document.write(html);
   w.document.close();
 }
 
-function saveConsentimiento(){
-  const pid=document.getElementById('cs_p').value;
-  const tipo=document.getElementById('cs_t').value;
+function guardarConsentimiento(){
+  var pid=document.getElementById('cs_p').value;
+  var tipo=document.getElementById('cs_t').value;
   if(!pid){alert('Selecciona un paciente');return;}
-  const p=S.patients[pid];
+  var p=S.patients[pid];
   if(!S.consentimientos)S.consentimientos=[];
   S.consentimientos.push({id:'CS'+Date.now(),pacienteId:pid,paciente:p.nombre,tipo:tipo,profesional:document.getElementById('cs_op').value,fecha:today()});
-  saveL();
-  showToast('✓ Consentimiento registrado','#27ae60');
+  saveL();showToast('Consentimiento registrado','#27ae60');
   pgConsentimientos(document.getElementById('pageContent'));
 }
 
@@ -1800,93 +1728,83 @@ function saveConsentimiento(){
 // REPORTE MENSUAL
 // ═══════════════════════════════════════════════════════════
 function pgReporte(c){
-  const meses=[];
-  const hoy=new Date();
-  for(let i=0;i<6;i++){const d=new Date(hoy.getFullYear(),hoy.getMonth()-i,1);meses.push(d.toISOString().slice(0,7));}
-  const mesActual=meses[0];
-
-  c.innerHTML=
-    '<div class="card"><div class="card-title"><i class="ti ti-report"></i> Seleccionar mes</div>'+
-      '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px">'+
-        meses.map(m=>'<button class="btn '+(m===mesActual?'btn-primary':'')+'" onclick="renderReporte(''+m+'',this)" style="font-size:11px">'+m+'</button>').join('')+
-      '</div>'+
-    '</div>'+
-    '<div id="reporteContent"></div>';
-  
-  renderReporte(mesActual, null);
+  var meses=[];
+  var hoy=new Date();
+  for(var i=0;i<6;i++){var d=new Date(hoy.getFullYear(),hoy.getMonth()-i,1);meses.push(d.toISOString().slice(0,7));}
+  var mesActual=meses[0];
+  var btns=meses.map(function(m){
+    return '<button class="btn '+(m===mesActual?'btn-primary':'')+'" data-mes="'+m+'" onclick="selReporte(this)" style="font-size:11px">'+m+'</button>';
+  }).join('');
+  c.innerHTML='<div class="card"><div class="card-title"><i class="ti ti-report"></i> Seleccionar mes</div><div style="display:flex;gap:8px;flex-wrap:wrap">'+btns+'</div></div><div id="repContent"></div>';
+  renderReporteMes(mesActual);
 }
 
-function renderReporte(mes, btn){
-  if(btn){document.querySelectorAll('#pageContent .btn').forEach(b=>b.classList.remove('btn-primary'));btn.classList.add('btn-primary');}
-  const ingresos=Object.values(S.payments).flat().filter(p=>p.fecha&&p.fecha.startsWith(mes));
-  const totalIngr=ingresos.reduce((s,p)=>s+(parseFloat(p.monto)||0),0);
-  const egresos=(S.egresos||[]).filter(e=>e.fecha&&e.fecha.startsWith(mes));
-  const totalEgr=egresos.reduce((s,e)=>s+(parseFloat(e.monto)||0),0);
-  const saldo=totalIngr-totalEgr;
-  const sesiones=Object.values(S.sessions).flat().filter(s=>s.fecha&&s.fecha.startsWith(mes));
-  const ptsMes=[...new Set(sesiones.map(s=>s.pacienteId))];
-  const citas=(S.citas||[]).filter(ct=>ct.fecha&&ct.fecha.startsWith(mes));
-  const citasAten=citas.filter(ct=>ct.estado==='atendido').length;
-  const deudaTotal=(S.deudas||[]).reduce((s,d)=>s+(parseFloat(d.monto)||0)*(parseInt(d.pendientes)||0),0);
+function selReporte(btn){
+  document.querySelectorAll('[data-mes]').forEach(function(b){b.classList.remove('btn-primary');});
+  btn.classList.add('btn-primary');
+  renderReporteMes(btn.dataset.mes);
+}
 
-  const byCat={};
-  egresos.forEach(e=>{byCat[e.categoria]=(byCat[e.categoria]||0)+(parseFloat(e.monto)||0);});
-
-  const rc=document.getElementById('reporteContent');
-  if(!rc)return;
+function renderReporteMes(mes){
+  var rc=document.getElementById('repContent');if(!rc)return;
+  var ingresos=Object.values(S.payments).flat().filter(function(p){return p.fecha&&p.fecha.startsWith(mes);});
+  var totalIngr=ingresos.reduce(function(s,p){return s+(parseFloat(p.monto)||0);},0);
+  var egresos=(S.egresos||[]).filter(function(e){return e.fecha&&e.fecha.startsWith(mes);});
+  var totalEgr=egresos.reduce(function(s,e){return s+(parseFloat(e.monto)||0);},0);
+  var saldo=totalIngr-totalEgr;
+  var sesiones=Object.values(S.sessions).flat().filter(function(s){return s.fecha&&s.fecha.startsWith(mes);});
+  var deudaTotal=(S.deudas||[]).reduce(function(s,d){return s+(parseFloat(d.monto)||0)*(parseInt(d.pendientes)||0);},0);
+  var byCat={};
+  egresos.forEach(function(e){byCat[e.categoria]=(byCat[e.categoria]||0)+(parseFloat(e.monto)||0);});
+  var byProc={};
+  ingresos.forEach(function(p){byProc[p.procedimiento||'Pago']=(byProc[p.procedimiento||'Pago']||0)+(parseFloat(p.monto)||0);});
   rc.innerHTML=
     '<div class="grid4" style="margin-bottom:14px">'+
       '<div class="metric"><div class="metric-v" style="color:var(--ok)">S/ '+totalIngr.toFixed(2)+'</div><div class="metric-l">Ingresos</div></div>'+
       '<div class="metric"><div class="metric-v" style="color:var(--red)">S/ '+totalEgr.toFixed(2)+'</div><div class="metric-l">Egresos</div></div>'+
       '<div class="metric"><div class="metric-v" style="color:'+(saldo>=0?'var(--ok)':'var(--red)')+'">S/ '+Math.abs(saldo).toFixed(2)+'</div><div class="metric-l">'+(saldo>=0?'Utilidad':'Déficit')+'</div></div>'+
-      '<div class="metric"><div class="metric-v" style="color:var(--warn)">S/ '+deudaTotal.toFixed(2)+'</div><div class="metric-l">Deuda acumulada</div></div>'+
-    '</div>'+
-    '<div class="grid3" style="margin-bottom:14px">'+
-      '<div class="metric"><div class="metric-v">'+sesiones.length+'</div><div class="metric-l">Sesiones</div></div>'+
-      '<div class="metric"><div class="metric-v">'+ptsMes.length+'</div><div class="metric-l">Pacientes atendidos</div></div>'+
-      '<div class="metric"><div class="metric-v">'+citasAten+'/'+citas.length+'</div><div class="metric-l">Citas atendidas</div></div>'+
+      '<div class="metric"><div class="metric-v" style="color:var(--warn)">S/ '+deudaTotal.toFixed(2)+'</div><div class="metric-l">Deudas</div></div>'+
     '</div>'+
     '<div class="grid2">'+
       '<div class="card"><div class="card-title">Ingresos por procedimiento</div>'+
         (ingresos.length===0?'<div style="font-size:12px;color:#ccc">Sin ingresos</div>':
-          (()=>{const bp={};ingresos.forEach(p=>{bp[p.procedimiento||'Pago']=(bp[p.procedimiento||'Pago']||0)+(parseFloat(p.monto)||0);});
-          return Object.entries(bp).sort((a,b)=>b[1]-a[1]).map(([pr,v])=>'<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--gl);font-size:12px"><span>'+pr+'</span><strong style="color:var(--ok)">S/ '+v.toFixed(2)+'</strong></div>').join('');})())+
+          Object.entries(byProc).sort(function(a,b){return b[1]-a[1];}).map(function(e){return '<div class="pago-row"><span>'+e[0]+'</span><strong style="color:var(--ok)">S/ '+e[1].toFixed(2)+'</strong></div>';}).join(''))+
       '</div>'+
       '<div class="card"><div class="card-title">Egresos por categoría</div>'+
         (egresos.length===0?'<div style="font-size:12px;color:#ccc">Sin egresos</div>':
-          Object.entries(byCat).sort((a,b)=>b[1]-a[1]).map(([cat,v])=>'<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--gl);font-size:12px"><span>'+cat+'</span><strong style="color:var(--red)">S/ '+v.toFixed(2)+'</strong></div>').join(''))+
+          Object.entries(byCat).sort(function(a,b){return b[1]-a[1];}).map(function(e){return '<div class="pago-row"><span>'+e[0]+'</span><strong style="color:var(--red)">S/ '+e[1].toFixed(2)+'</strong></div>';}).join(''))+
       '</div>'+
     '</div>'+
-    '<button class="btn btn-primary" onclick="imprimirReporte(''+mes+'')" style="margin-top:4px"><i class="ti ti-printer"></i> Imprimir reporte</button>';
+    '<button class="btn btn-primary" data-mes="'+mes+'" onclick="imprimirReporteBtn(this)" style="margin-top:4px"><i class="ti ti-printer"></i> Imprimir reporte</button>';
 }
 
+function imprimirReporteBtn(btn){imprimirReporte(btn.dataset.mes);}
 function imprimirReporte(mes){
-  const ingresos=Object.values(S.payments).flat().filter(p=>p.fecha&&p.fecha.startsWith(mes));
-  const totalIngr=ingresos.reduce((s,p)=>s+(parseFloat(p.monto)||0),0);
-  const egresos=(S.egresos||[]).filter(e=>e.fecha&&e.fecha.startsWith(mes));
-  const totalEgr=egresos.reduce((s,e)=>s+(parseFloat(e.monto)||0),0);
-  const saldo=totalIngr-totalEgr;
-  const w=window.open('','_blank');
-  w.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8">
-  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500&display=swap" rel="stylesheet">
-  <style>body{font-family:Montserrat,sans-serif;padding:40px;max-width:600px;margin:0 auto;color:#4A4A4A;font-size:13px}
-  h1{font-size:20px;font-weight:300;color:#00AFC1;letter-spacing:4px;text-align:center}
-  .sub{font-size:8px;color:#ccc;letter-spacing:3px;text-transform:uppercase;text-align:center;margin-bottom:20px}
-  h2{font-size:11px;font-weight:500;text-transform:uppercase;letter-spacing:1px;margin:20px 0 8px;color:#00AFC1}
-  .row{display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid #eee;font-size:12px}
-  .total{font-size:16px;font-weight:500;color:#00AFC1}
-  @media print{button{display:none}}</style></head><body>
-  <h1>DENTALYS</h1><div class="sub">Reporte Mensual — ${mes}</div>
-  <h2>Resumen financiero</h2>
-  <div class="row"><span>Total ingresos</span><strong style="color:#27ae60">S/ ${totalIngr.toFixed(2)}</strong></div>
-  <div class="row"><span>Total egresos</span><strong style="color:#c0392b">S/ ${totalEgr.toFixed(2)}</strong></div>
-  <div class="row"><span>${saldo>=0?'Utilidad neta':'Déficit'}</span><strong class="total">S/ ${Math.abs(saldo).toFixed(2)}</strong></div>
-  <h2>Detalle de egresos</h2>
-  ${egresos.map(e=>'<div class="row"><span>'+e.descripcion+' ('+e.categoria+')</span><span>S/ '+parseFloat(e.monto).toFixed(2)+'</span></div>').join('')||'<div style="color:#ccc">Sin egresos registrados</div>'}
-  <br><button onclick="window.print()" style="padding:10px 20px;background:#00AFC1;color:#fff;border:none;border-radius:8px;cursor:pointer;font-family:Montserrat,sans-serif">🖨 Imprimir</button>
-  </body></html>`);
-  w.document.close();
+  var ingresos=Object.values(S.payments).flat().filter(function(p){return p.fecha&&p.fecha.startsWith(mes);});
+  var totalIngr=ingresos.reduce(function(s,p){return s+(parseFloat(p.monto)||0);},0);
+  var egresos=(S.egresos||[]).filter(function(e){return e.fecha&&e.fecha.startsWith(mes);});
+  var totalEgr=egresos.reduce(function(s,e){return s+(parseFloat(e.monto)||0);},0);
+  var saldo=totalIngr-totalEgr;
+  var egRows=egresos.map(function(e){return '<div class="row"><span>'+e.descripcion+' ('+e.categoria+')</span><span>S/ '+parseFloat(e.monto).toFixed(2)+'</span></div>';}).join('');
+  var html='<!DOCTYPE html><html><head><meta charset="UTF-8">'+
+    '<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500&display=swap" rel="stylesheet">'+
+    '<style>body{font-family:Montserrat,sans-serif;padding:40px;max-width:600px;margin:0 auto;color:#4A4A4A;font-size:13px}'+
+    'h1{font-size:20px;font-weight:300;color:#00AFC1;letter-spacing:4px;text-align:center}'+
+    '.sub{font-size:8px;color:#ccc;letter-spacing:3px;text-transform:uppercase;text-align:center;margin-bottom:20px}'+
+    'h2{font-size:11px;font-weight:500;text-transform:uppercase;letter-spacing:1px;margin:20px 0 8px;color:#00AFC1}'+
+    '.row{display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid #eee;font-size:12px}'+
+    '@media print{button{display:none}}</style></head><body>'+
+    '<h1>DENTALYS</h1><div class="sub">Reporte Mensual - '+mes+'</div>'+
+    '<h2>Resumen</h2>'+
+    '<div class="row"><span>Ingresos</span><strong style="color:#27ae60">S/ '+totalIngr.toFixed(2)+'</strong></div>'+
+    '<div class="row"><span>Egresos</span><strong style="color:#c0392b">S/ '+totalEgr.toFixed(2)+'</strong></div>'+
+    '<div class="row"><span>'+(saldo>=0?'Utilidad':'Déficit')+'</span><strong style="color:#00AFC1">S/ '+Math.abs(saldo).toFixed(2)+'</strong></div>'+
+    '<h2>Detalle egresos</h2>'+(egRows||'<div style="color:#ccc">Sin egresos</div>')+
+    '<br><button onclick="window.print()" style="padding:10px 20px;background:#00AFC1;color:#fff;border:none;border-radius:8px;cursor:pointer">Imprimir</button>'+
+    '</body></html>';
+  var w=window.open('','_blank');w.document.write(html);w.document.close();
 }
+
 </script>
 </body>
 </html>
