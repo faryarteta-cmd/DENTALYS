@@ -1,0 +1,1321 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DENTALYS — Sistema Clínico</title>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{--tq:#00AFC1;--tq-d:#008fa0;--tq-l:#e6f7f9;--tq-ll:#f0fbfc;--graf:#4A4A4A;--gsb:#F4F5F6;--gl:#E8E9EA;--red:#c0392b;--warn:#e67e22;--ok:#27ae60;--font:'Montserrat',sans-serif}
+body{font-family:var(--font);font-size:13px;color:var(--graf);background:#fff}
+.app{display:flex;height:100vh;overflow:hidden}
+.sidebar{width:225px;min-width:225px;background:var(--gsb);border-right:1px solid var(--gl);display:flex;flex-direction:column}
+.sb-head{padding:20px 18px 14px;border-bottom:1px solid var(--gl)}
+.sb-name{font-weight:300;font-size:17px;color:var(--tq);letter-spacing:4px}
+.sb-slogan{font-size:7px;color:var(--tq);letter-spacing:2.5px;text-transform:uppercase;margin-top:3px}
+.sb-line{width:30px;height:1px;background:var(--tq);opacity:.4;margin:6px 0 0}
+.nav-sec{padding:12px 16px 3px;font-size:9px;color:#bbb;letter-spacing:1.5px;text-transform:uppercase;font-weight:500}
+.nav-item{display:flex;align-items:center;gap:9px;padding:8px 18px;cursor:pointer;font-size:11.5px;color:#888;border-left:2px solid transparent}
+.nav-item:hover{background:#ecedf0;color:var(--graf)}
+.nav-item.active{background:#fff;color:var(--tq);border-left-color:var(--tq);font-weight:500}
+.nav-badge{margin-left:auto;background:#fef0f0;color:var(--red);font-size:9px;font-weight:500;padding:1px 6px;border-radius:20px}
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden}
+.sync-bar{display:flex;align-items:center;gap:8px;padding:5px 22px;background:var(--gsb);border-bottom:1px solid var(--gl);font-size:10px;color:#aaa}
+.sync-dot{width:7px;height:7px;border-radius:50%;background:#ccc;flex-shrink:0}
+.sync-dot.ok{background:var(--ok)}.sync-dot.sync{background:var(--warn);animation:pulse 1s infinite}.sync-dot.err{background:var(--red)}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+.topbar{background:#fff;border-bottom:1px solid var(--gl);padding:0 22px;display:flex;align-items:center;justify-content:space-between;height:50px;gap:12px}
+.t-title{font-size:13px;font-weight:300;letter-spacing:.8px;white-space:nowrap}
+.t-right{display:flex;align-items:center;gap:8px;flex:1;justify-content:flex-end}
+.search-wrap{position:relative}
+.search-box{display:flex;align-items:center;gap:8px;background:var(--gsb);border:1px solid var(--gl);border-radius:8px;padding:6px 12px;width:250px}
+.search-box input{border:none;background:transparent;outline:none;font-size:12px;color:var(--graf);width:100%;font-family:var(--font)}
+.search-drop{position:absolute;top:calc(100% + 5px);left:0;right:0;background:#fff;border:1px solid var(--gl);border-radius:10px;z-index:600;max-height:320px;overflow-y:auto;box-shadow:0 6px 24px rgba(0,0,0,.12);display:none}
+.sd-item{display:flex;align-items:center;gap:10px;padding:9px 12px;border-bottom:1px solid var(--gl);cursor:pointer}
+.sd-item:hover{background:var(--tq-ll)}
+.btn{padding:7px 14px;border-radius:8px;border:1px solid var(--gl);background:#fff;cursor:pointer;font-size:12px;color:var(--graf);display:inline-flex;align-items:center;gap:5px;font-family:var(--font);white-space:nowrap}
+.btn:hover{background:var(--gsb)}
+.btn-primary{background:var(--tq);color:#fff;border-color:var(--tq);font-weight:500}
+.btn-primary:hover{background:var(--tq-d)}
+.btn-admin{background:var(--graf);color:#fff;border-color:var(--graf)}
+.btn-sheets{background:#0f9d58;color:#fff;border-color:#0f9d58;font-weight:500}
+.btn-danger{background:var(--red);color:#fff;border-color:var(--red)}
+.btn-sm{padding:4px 9px;font-size:11px}
+.content{flex:1;overflow-y:auto;padding:18px 22px}
+.card{background:#fff;border:1px solid var(--gl);border-radius:12px;padding:16px;margin-bottom:14px}
+.card-title{font-size:10px;font-weight:500;margin-bottom:12px;display:flex;align-items:center;gap:6px;color:var(--tq);text-transform:uppercase;letter-spacing:1.2px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+label{font-size:10px;color:#aaa;display:block;margin-bottom:4px;text-transform:uppercase;letter-spacing:.5px}
+input,select,textarea{width:100%;padding:7px 11px;border:1px solid var(--gl);border-radius:8px;font-size:12px;background:#fff;color:var(--graf);font-family:var(--font)}
+input:focus,select:focus,textarea:focus{outline:2px solid var(--tq);outline-offset:-1px}
+textarea{resize:vertical;min-height:58px}
+.form-row{margin-bottom:10px}
+.divider{border:none;border-top:1px solid var(--gl);margin:14px 0}
+.metric{background:var(--gsb);border-radius:10px;padding:14px;text-align:center}
+.metric-v{font-size:20px;font-weight:300;color:var(--tq)}
+.metric-l{font-size:9px;color:#bbb;margin-top:3px;letter-spacing:1px;text-transform:uppercase}
+.badge{display:inline-flex;align-items:center;gap:3px;padding:2px 8px;border-radius:20px;font-size:10px;font-weight:500}
+.bd{background:#fef0f0;color:var(--red)}.bw{background:#fff8ed;color:#a05c00}.bg{background:#edfaf3;color:#1a7a45}.bi{background:var(--tq-l);color:var(--tq-d)}
+.rs-diab{background:#fff0f0;color:#b91c1c;border:1px solid #fca5a5}
+.rs-hta{background:#fff7ed;color:#c2410c;border:1px solid #fdba74}
+.rs-anti{background:#fdf4ff;color:#7e22ce;border:1px solid #d8b4fe}
+.rs-alg{background:#fefce8;color:#92400e;border:1px solid #fde68a}
+.rs-gen{background:#f0f9ff;color:#075985;border:1px solid #bae6fd}
+.pt-row{display:flex;align-items:flex-start;gap:12px;padding:10px 0;border-bottom:1px solid var(--gl);cursor:pointer}
+.pt-row:hover{background:var(--tq-ll);margin:0 -16px;padding:10px 16px}
+.avatar{width:34px;height:34px;border-radius:50%;background:var(--tq-l);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:500;color:var(--tq);flex-shrink:0}
+.tab-bar{display:flex;border-bottom:1px solid var(--gl);margin-bottom:14px;overflow-x:auto}
+.tab{padding:8px 13px;font-size:10px;cursor:pointer;color:#bbb;border-bottom:2px solid transparent;white-space:nowrap;letter-spacing:1px;text-transform:uppercase}
+.tab.active{color:var(--tq);border-bottom-color:var(--tq);font-weight:500}
+.alert-row{display:flex;align-items:flex-start;gap:10px;padding:10px 12px;border-radius:8px;margin-bottom:6px;cursor:pointer}
+.ar-red{background:#fef0f0;border-left:3px solid var(--red)}
+.ar-yel{background:#fffbf0;border-left:3px solid var(--warn)}
+.ar-grn{background:#f0fbf5;border-left:3px solid var(--ok)}
+.ar-blu{background:var(--gsb);border-left:3px solid var(--gl)}
+.sess-item{border-left:3px solid var(--tq);padding:10px 14px;margin-bottom:8px;background:var(--tq-ll);border-radius:0 8px 8px 0}
+.prog-bar{background:var(--gsb);border-radius:10px;height:5px;overflow:hidden;margin-top:4px}
+.prog-fill{height:100%;background:var(--tq);border-radius:10px}
+.pago-row{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--gl);font-size:12px}
+.ctrl-item{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--gl)}
+.admin-lock{background:var(--gsb);border:1px dashed var(--gl);border-radius:12px;padding:28px;text-align:center}
+/* ODONTOGRAMA */
+.tooth-row{display:flex;justify-content:center;gap:2px;margin-bottom:4px}
+.tooth-wrap{display:flex;flex-direction:column;align-items:center;gap:1px;cursor:pointer;padding:2px}
+.tooth-num{font-size:7.5px;color:#ccc}
+.tooth-box{width:26px;height:26px;border-radius:4px;border:1.5px solid #ddd;background:#fff;display:flex;align-items:center;justify-content:center;font-size:8px;font-weight:600;cursor:pointer;transition:all .12s;user-select:none}
+.tooth-box:hover{border-color:var(--tq)}
+.tooth-box.sel{box-shadow:0 0 0 2.5px var(--tq);border-color:var(--tq)}
+/* COND PIEZA */
+.cond-row{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px}
+.cond-pill{padding:6px 12px;border-radius:20px;font-size:11px;font-weight:500;cursor:pointer;border:1.5px solid #ddd;color:#aaa;background:#fff;transition:all .12s}
+.cond-pill:hover{border-color:var(--tq);color:var(--tq)}
+.cond-pill.sel{color:#fff;border-color:transparent}
+/* TOAST */
+.toast{position:fixed;bottom:22px;right:22px;padding:10px 18px;border-radius:9px;font-size:11px;z-index:9999;color:#fff;display:flex;align-items:center;gap:8px;box-shadow:0 4px 16px rgba(0,0,0,.18);max-width:340px}
+/* LOCK */
+.lock-screen{position:fixed;inset:0;background:var(--gsb);display:flex;align-items:center;justify-content:center;z-index:9999}
+.lock-card{background:#fff;border:1px solid var(--gl);border-radius:16px;padding:44px 50px;width:360px;text-align:center;box-shadow:0 8px 40px rgba(0,0,0,.08)}
+.lock-name{font-weight:300;font-size:27px;color:var(--tq);letter-spacing:6px;margin-bottom:4px}
+.lock-slogan{font-size:9px;color:var(--tq);letter-spacing:3px;text-transform:uppercase}
+.lock-line{width:38px;height:1px;background:var(--tq);opacity:.4;margin:10px auto 26px}
+/* MODAL PROFESIONALES */
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;z-index:8000}
+.modal{background:#fff;border-radius:14px;padding:24px;width:380px;box-shadow:0 8px 40px rgba(0,0,0,.15)}
+</style>
+</head>
+<body>
+
+<!-- LOCK -->
+<div id="lockScreen" class="lock-screen">
+  <div class="lock-card">
+    <div class="lock-name">DENTALYS</div>
+    <div class="lock-slogan">Magia en tu Sonrisa</div>
+    <div class="lock-line"></div>
+    <div class="form-row" style="text-align:left">
+      <label>Contraseña de acceso</label>
+      <input type="password" id="pwdInput" placeholder="Ingrese contraseña" onkeydown="if(event.key==='Enter')checkPwd()" autofocus />
+    </div>
+    <div id="pwdError" style="color:var(--red);font-size:11px;margin-bottom:10px;display:none">Contraseña incorrecta</div>
+    <button class="btn btn-primary" style="width:100%;justify-content:center;padding:10px;margin-bottom:14px" onclick="checkPwd()">
+      <i class="ti ti-lock-open"></i> Ingresar al sistema
+    </button>
+    
+  </div>
+</div>
+
+<!-- APP -->
+<div class="app" id="mainApp" style="display:none">
+  <div class="sidebar">
+    <div class="sb-head">
+      <div class="sb-name">DENTALYS</div>
+      <div class="sb-slogan">Magia en tu Sonrisa</div>
+      <div class="sb-line"></div>
+    </div>
+    <div style="flex:1;overflow-y:auto">
+      <div class="nav-sec">Principal</div>
+      <div class="nav-item active" onclick="nav('dashboard')"><i class="ti ti-home"></i> Inicio</div>
+      <div class="nav-item" onclick="nav('alertas')"><i class="ti ti-bell"></i> Controles programados <span id="alertCount" class="nav-badge" style="display:none">0</span></div>
+      <div class="nav-sec">Pacientes</div>
+      <div class="nav-item" onclick="nav('pacientes')"><i class="ti ti-users"></i> Lista de pacientes</div>
+      <div class="nav-item" onclick="nav('nuevo')"><i class="ti ti-user-plus"></i> Nuevo paciente</div>
+      <div class="nav-sec">Economía</div>
+      <div class="nav-item" onclick="nav('caja')"><i class="ti ti-cash"></i> Caja del día</div>
+      <div class="nav-item" onclick="nav('recibo')"><i class="ti ti-receipt"></i> Recibos / SUNAT</div>
+      <div class="nav-sec">Configuración</div>
+      <div class="nav-item" onclick="nav('profesionales')"><i class="ti ti-user-cog"></i> Profesionales</div>
+      <div class="nav-sec">Reportes</div>
+      <div class="nav-item" onclick="nav('estadistica')"><i class="ti ti-chart-bar"></i> Estadísticas</div>
+      <div class="nav-item" onclick="nav('exportar')"><i class="ti ti-download"></i> Exportar</div>
+    </div>
+    <div style="padding:12px 18px;border-top:1px solid var(--gl)">
+      <div style="font-size:10px;color:#ccc;margin-bottom:7px" id="sbDate"></div>
+      <button class="btn btn-sheets" style="width:100%;justify-content:center;font-size:11px;margin-bottom:6px" onclick="syncToSheets()"><i class="ti ti-refresh"></i> Sincronizar Sheets</button>
+      <button class="btn" style="width:100%;justify-content:center;font-size:11px" onclick="logout()"><i class="ti ti-logout"></i> Cerrar sesión</button>
+    </div>
+  </div>
+
+  <div class="main">
+    <div class="sync-bar">
+      <div class="sync-dot" id="syncDot"></div>
+      <span id="syncStatus">Listo</span>
+      <span style="margin-left:auto;cursor:pointer;color:var(--tq);font-size:11px" onclick="syncToSheets()"><i class="ti ti-refresh"></i> Sincronizar ahora</span>
+    </div>
+    <div class="topbar">
+      <div class="t-title" id="pageTitle">Inicio</div>
+      <div class="t-right">
+        <div class="search-wrap">
+          <div class="search-box">
+            <i class="ti ti-search" style="color:#ccc;font-size:14px;flex-shrink:0"></i>
+            <input type="text" id="gSearch" placeholder="Buscar paciente..." autocomplete="off"
+              oninput="onSearch(this.value)" onfocus="showSearchDrop()" onblur="setTimeout(hideSD,200)" />
+          </div>
+          <div class="search-drop" id="searchDrop"><div id="searchRes"></div></div>
+        </div>
+        <button class="btn btn-primary" onclick="nav('nuevo')"><i class="ti ti-plus"></i> Nuevo</button>
+      </div>
+    </div>
+    <div class="content" id="pageContent"></div>
+  </div>
+</div>
+
+<!-- IFRAME oculto para enviar datos a Sheets (técnica form-target) -->
+<iframe id="gsFrame" name="gsFrame" style="display:none"></iframe>
+<form id="gsForm" method="POST" target="gsFrame" style="display:none">
+  <input type="hidden" id="gsPayload" name="payload" />
+</form>
+
+<script>
+// ═══════════════════════════════════════════════════════════
+// CONFIG
+// ═══════════════════════════════════════════════════════════
+const PASS = 'talys1984';
+const ADMIN_PASS = 'admin2025';
+const GS_URL = 'https://script.google.com/macros/s/AKfycbzAHo7yLNJ4P6ytWYt0LEkGsgie3zB83BYZ21mbafVZ9wgb5B4uXar2qqRVK9vaUwM0/exec';
+const SHEET_URL = 'https://docs.google.com/spreadsheets/d/1foBwWPZmTFJdN329zmg4Gy6aOzJ2PmchZ1AtTgEeCSc';
+const SUNAT_URL = 'https://ww1.sunat.gob.pe/ol-ti-itrheemision/emisionrhe.do';
+
+// ═══════════════════════════════════════════════════════════
+// ESTADO GLOBAL
+// ═══════════════════════════════════════════════════════════
+let S = {
+  patients:{}, sessions:{}, payments:{}, controls:{}, toothData:{}, examenes:{},
+  profesionales:['Dr./Dra. - (sin asignar)']
+};
+let curPid = null, curTab = 'hc';
+
+// ═══════════════════════════════════════════════════════════
+// LOCAL STORAGE
+// ═══════════════════════════════════════════════════════════
+function saveL() { try { localStorage.setItem('dnt_v3', JSON.stringify(S)); } catch(e){} }
+function loadL() {
+  try {
+    const d = localStorage.getItem('dnt_v3');
+    if (d) { S = JSON.parse(d); if (!S.profesionales) S.profesionales=['Dr./Dra. - (sin asignar)']; }
+    else {
+      // migrar versiones anteriores
+      const old = localStorage.getItem('dentalys_db_v2') || localStorage.getItem('dentalys_db');
+      if (old) {
+        const o = JSON.parse(old);
+        S.patients = o.patients||{}; S.sessions = o.sessions||{};
+        S.payments = o.payments||{}; S.controls = o.controls||{};
+        S.toothData = o.toothData||{}; S.examenes = o.examenes||{};
+      }
+    }
+  } catch(e){}
+}
+
+// ═══════════════════════════════════════════════════════════
+// GOOGLE SHEETS — técnica JSONP via script tag (la única
+// que funciona desde archivo local con Apps Script)
+// ═══════════════════════════════════════════════════════════
+let _cbId = 0;
+function gsCall(action, payload) {
+  return new Promise((resolve) => {
+    const cbName = '__gsCb' + (++_cbId);
+    const data = JSON.stringify({ action, payload });
+    const encoded = encodeURIComponent(data);
+    const url = GS_URL + '?callback=' + cbName + '&data=' + encoded;
+    
+    window[cbName] = function(res) {
+      resolve(res);
+      delete window[cbName];
+      const el = document.getElementById('gs_script_'+_cbId);
+      if (el) el.remove();
+    };
+    
+    const script = document.createElement('script');
+    script.id = 'gs_script_' + _cbId;
+    script.src = url;
+    script.onerror = function() {
+      resolve({ ok:false, error:'Error de red o Apps Script no responde' });
+      delete window[cbName];
+      script.remove();
+    };
+    // timeout 12 segundos
+    setTimeout(() => {
+      if (window[cbName]) {
+        resolve({ ok:false, error:'Timeout — Apps Script tardó demasiado' });
+        delete window[cbName];
+        if (script.parentNode) script.remove();
+      }
+    }, 12000);
+    document.head.appendChild(script);
+  });
+}
+
+async function syncToSheets() {
+  setSS('sync', 'Sincronizando con Google Sheets...');
+  showToast('Enviando datos...', '#e67e22');
+  try {
+    const res = await gsCall('syncAll', S);
+    if (res && res.ok) {
+      setSS('ok', 'Sincronizado ✓ ' + new Date().toLocaleTimeString('es-PE'));
+      showToast('✓ Datos enviados a Google Sheets correctamente', '#27ae60');
+    } else {
+      setSS('err', 'Error: ' + (res&&res.error||'sin respuesta'));
+      showToast('Error Sheets: ' + (res&&res.error||'sin respuesta'), '#c0392b');
+    }
+  } catch(e) {
+    setSS('err', 'Error: ' + e.message);
+    showToast('Error de conexión', '#c0392b');
+  }
+}
+
+async function gsSave(action, payload) {
+  try {
+    const res = await gsCall(action, payload);
+    if (res && res.ok) setSS('ok', 'Guardado en Sheets ✓');
+  } catch(e) { setSS('err','Sin conexión Sheets'); }
+}
+
+function setSS(t, m) {
+  const d = document.getElementById('syncDot');
+  const s = document.getElementById('syncStatus');
+  if (!d||!s) return;
+  d.className = 'sync-dot ' + t;
+  s.textContent = m;
+}
+
+// ═══════════════════════════════════════════════════════════
+// TOAST
+// ═══════════════════════════════════════════════════════════
+function showToast(msg, bg, dur) {
+  const el = document.createElement('div');
+  el.className = 'toast';
+  el.style.background = bg||'#00AFC1';
+  el.textContent = msg;
+  document.body.appendChild(el);
+  setTimeout(() => el.style.opacity='0', (dur||3000)-400);
+  setTimeout(() => el.remove(), dur||3000);
+}
+
+// ═══════════════════════════════════════════════════════════
+// AUTH
+// ═══════════════════════════════════════════════════════════
+function checkPwd() {
+  if (document.getElementById('pwdInput').value === PASS) {
+    document.getElementById('lockScreen').style.display = 'none';
+    document.getElementById('mainApp').style.display = 'flex';
+    loadL(); nav('dashboard');
+    document.getElementById('sbDate').textContent =
+      new Date().toLocaleDateString('es-PE',{weekday:'long',day:'numeric',month:'long'});
+  } else {
+    document.getElementById('pwdError').style.display = 'block';
+  }
+}
+function logout() {
+  document.getElementById('mainApp').style.display='none';
+  document.getElementById('lockScreen').style.display='flex';
+  document.getElementById('pwdInput').value='';
+}
+
+// ═══════════════════════════════════════════════════════════
+// UTILS
+// ═══════════════════════════════════════════════════════════
+function genId() {
+  const d=new Date(), ymd=d.getFullYear()+String(d.getMonth()+1).padStart(2,'0')+String(d.getDate()).padStart(2,'0');
+  return 'PAC-'+ymd+'-'+String(Object.keys(S.patients).length+1).padStart(3,'0');
+}
+function ini(n){ return n.split(' ').slice(0,2).map(w=>w[0]).join('').toUpperCase(); }
+function age(fn){ if(!fn)return'?'; return Math.floor((new Date()-new Date(fn))/(365.25*24*3600*1e3)); }
+function fd(d){ if(!d)return'--'; const p=d.split('-'); return p[2]+'/'+p[1]+'/'+p[0]; }
+function today(){ return new Date().toISOString().split('T')[0]; }
+function addTime(ds,t){
+  const d=new Date(ds),p=t.split(' '),n=parseInt(p[0]),u=p[1];
+  if(u.includes('semana'))d.setDate(d.getDate()+n*7);
+  else if(u.includes('mes'))d.setMonth(d.getMonth()+n);
+  else d.setDate(d.getDate()+n);
+  return d.toISOString().split('T')[0];
+}
+function esc(s){ return (s||'').replace(/'/g,'&#39;').replace(/"/g,'&quot;'); }
+function getProfOpts(sel){
+  return S.profesionales.map(p=>'<option value="'+esc(p)+'"'+(sel===p?' selected':'')+'>'+p+'</option>').join('');
+}
+
+// ═══════════════════════════════════════════════════════════
+// RIESGO SISTÉMICO
+// ═══════════════════════════════════════════════════════════
+const RS = [
+  {k:'diabetes',    l:'Diabetes',     c:'rs-diab', i:'ti-droplet'},
+  {k:'hipertension',l:'HTA',          c:'rs-hta',  i:'ti-heart-rate-monitor'},
+  {k:'cardiopatia', l:'Cardiopatía',  c:'rs-hta',  i:'ti-heart'},
+  {k:'anticoagulante',l:'Anticoagulante',c:'rs-anti',i:'ti-pill'},
+  {k:'warfarin',    l:'Warfarina',    c:'rs-anti', i:'ti-pill'},
+  {k:'aspirina',    l:'Aspirina',     c:'rs-anti', i:'ti-pill'},
+  {k:'bisfosfonato',l:'Bifosfonato',  c:'rs-anti', i:'ti-pill'},
+  {k:'inmunosupresor',l:'Inmunosupresor',c:'rs-anti',i:'ti-virus'},
+  {k:'embarazo',    l:'Embarazo',     c:'rs-anti', i:'ti-baby-carriage'},
+  {k:'coagulacion', l:'Coagulopatía', c:'rs-anti', i:'ti-pill'},
+  {k:'vih',         l:'VIH',          c:'rs-gen',  i:'ti-shield-half'},
+  {k:'hepatitis',   l:'Hepatitis',    c:'rs-gen',  i:'ti-shield-half'},
+];
+function getRiesgos(p){
+  const txt=((p.antecedentes||'')+' '+(p.medicamentos||'')).toLowerCase();
+  const found=RS.filter(r=>txt.includes(r.k));
+  if(p.alergias&&p.alergias.trim()&&p.alergias.toLowerCase()!=='nkda')
+    found.push({k:'_alg',l:'Alergia: '+p.alergias,c:'rs-alg',i:'ti-alert-circle'});
+  return found;
+}
+function rsBadges(p,max){
+  const rs=getRiesgos(p); if(!rs.length)return'';
+  const sh=max?rs.slice(0,max):rs;
+  const ex=max&&rs.length>max?rs.length-max:0;
+  let h=sh.map(r=>'<span class="badge '+r.c+'" style="margin:1px 2px 1px 0;font-size:9px"><i class="ti '+r.i+'" style="font-size:8px"></i> '+r.l+'</span>').join('');
+  if(ex)h+='<span class="badge" style="background:#eee;color:#888;font-size:9px;margin:1px 0">+'+ex+' más</span>';
+  return h;
+}
+
+// ═══════════════════════════════════════════════════════════
+// ALERTAS / CONTROLES PROGRAMADOS
+// ═══════════════════════════════════════════════════════════
+function getAlerts(){
+  const al=[],tod=new Date();tod.setHours(0,0,0,0);
+  const d7=new Date(tod);d7.setDate(d7.getDate()+7);
+  const d30=new Date(tod);d30.setDate(d30.getDate()+30);
+  Object.entries(S.controls).forEach(([pid,cs])=>{
+    const p=S.patients[pid]; if(!p)return;
+    (cs||[]).forEach(c=>{
+      if(c.estado!=='pendiente')return;
+      const fd2=new Date(c.fecha);fd2.setHours(0,0,0,0);
+      let type='futuro';
+      if(fd2<tod)type='vencido';
+      else if(fd2.getTime()===tod.getTime())type='hoy';
+      else if(fd2<=d7)type='prox7';
+      else if(fd2<=d30)type='prox30';
+      al.push({type,pid,cid:c.id,name:p.nombre,tel:p.tel||'',proc:c.tipo,fecha:c.fecha,rs:getRiesgos(p)});
+    });
+  });
+  return al.sort((a,b)=>a.fecha.localeCompare(b.fecha));
+}
+function updateAC(){
+  const n=getAlerts().filter(a=>a.type==='vencido'||a.type==='hoy').length;
+  const el=document.getElementById('alertCount');
+  if(!el)return;
+  if(n>0){el.textContent=n;el.style.display='inline-block';}else el.style.display='none';
+}
+
+// ═══════════════════════════════════════════════════════════
+// BÚSQUEDA — vincula con datos reales de pacientes
+// ═══════════════════════════════════════════════════════════
+function onSearch(v){
+  if(!v.trim()){hideSD();return;}
+  renderSearchDrop(v.trim());
+}
+function showSearchDrop(){
+  const v=document.getElementById('gSearch').value.trim();
+  renderSearchDrop(v||'');
+}
+function hideSD(){ document.getElementById('searchDrop').style.display='none'; }
+function renderSearchDrop(q){
+  const drop=document.getElementById('searchDrop');
+  const res=document.getElementById('searchRes');
+  drop.style.display='block';
+  const pts=Object.values(S.patients).filter(p=>{
+    if(!q)return true;
+    return p.nombre.toLowerCase().includes(q.toLowerCase())||(p.dni&&p.dni.startsWith(q));
+  });
+  if(!pts.length){
+    res.innerHTML='<div style="padding:14px;text-align:center;font-size:11px;color:#ccc">No se encontraron pacientes</div>';
+    return;
+  }
+  // ordenar: DNI exacto primero, luego nombre
+  pts.sort((a,b)=>{
+    if(q&&a.dni===q)return-1; if(q&&b.dni===q)return 1;
+    return a.nombre.localeCompare(b.nombre);
+  });
+  const isDNI=/^\d+$/.test(q);
+  res.innerHTML=pts.slice(0,8).map(p=>{
+    const rs=getRiesgos(p);
+    let nombre=p.nombre, dni=p.dni||'--';
+    if(q&&!isDNI){
+      const i=nombre.toLowerCase().indexOf(q.toLowerCase());
+      if(i>=0)nombre=nombre.slice(0,i)+'<strong style="color:var(--tq)">'+nombre.slice(i,i+q.length)+'</strong>'+nombre.slice(i+q.length);
+    }
+    if(q&&isDNI&&p.dni){
+      const i=p.dni.indexOf(q);
+      if(i>=0)dni=p.dni.slice(0,i)+'<strong style="color:var(--tq)">'+p.dni.slice(i,i+q.length)+'</strong>'+p.dni.slice(i+q.length);
+    }
+    return '<div class="sd-item" onclick="selPac(\''+p.id+'\')">'+
+      '<div class="avatar">'+ini(p.nombre)+'</div>'+
+      '<div style="flex:1">'+
+        '<div style="font-size:12px;font-weight:500">'+nombre+'</div>'+
+        '<div style="font-size:10px;color:#bbb">DNI: '+dni+' · '+age(p.fechaNac)+' años · '+(p.especialidad||'General')+(p.tel?' · '+p.tel:'')+'</div>'+
+        (rs.length?'<div style="margin-top:2px">'+rsBadges(p,3)+'</div>':'')+
+      '</div>'+
+    '</div>';
+  }).join('');
+}
+function selPac(pid){
+  document.getElementById('gSearch').value='';
+  hideSD();
+  openPt(pid);
+}
+
+// ═══════════════════════════════════════════════════════════
+// NAVEGACIÓN
+// ═══════════════════════════════════════════════════════════
+const PAGE_TITLES={dashboard:'Inicio',alertas:'Controles programados',pacientes:'Lista de pacientes',nuevo:'Nuevo paciente',caja:'Caja del día',recibo:'Recibos / SUNAT',profesionales:'Profesionales',estadistica:'Estadísticas',exportar:'Exportar',ficha:'Ficha del paciente'};
+const NAV_IDX={dashboard:0,alertas:1,pacientes:3,nuevo:4,caja:6,recibo:7,profesionales:9,estadistica:11,exportar:12};
+function nav(page){
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  const items=document.querySelectorAll('.nav-item');
+  if(NAV_IDX[page]!==undefined&&items[NAV_IDX[page]])items[NAV_IDX[page]].classList.add('active');
+  document.getElementById('pageTitle').textContent=PAGE_TITLES[page]||page;
+  const c=document.getElementById('pageContent');c.innerHTML='';
+  if(page==='dashboard')pgDash(c);
+  else if(page==='alertas')pgAlertas(c);
+  else if(page==='pacientes')pgPacientes(c);
+  else if(page==='nuevo')pgNuevo(c);
+  else if(page==='caja')pgCaja(c);
+  else if(page==='recibo')pgRecibo(c);
+  else if(page==='profesionales')pgProfesionales(c);
+  else if(page==='estadistica')pgStats(c);
+  else if(page==='exportar')pgExportar(c);
+  else if(page==='ficha')pgFicha(c,curPid);
+  updateAC();
+}
+function openPt(pid){curPid=pid;curTab='hc';nav('ficha');}
+
+// ═══════════════════════════════════════════════════════════
+// DASHBOARD
+// ═══════════════════════════════════════════════════════════
+function pgDash(c){
+  const pts=Object.values(S.patients), al=getAlerts();
+  const venc=al.filter(a=>a.type==='vencido').length;
+  const hoy=al.filter(a=>a.type==='hoy').length;
+  const prox=al.filter(a=>a.type==='prox7').length;
+  c.innerHTML=
+    '<div class="grid4" style="margin-bottom:16px">'+
+      '<div class="metric"><div class="metric-v">'+pts.length+'</div><div class="metric-l">Pacientes</div></div>'+
+      '<div class="metric"><div class="metric-v" style="color:var(--red)">'+venc+'</div><div class="metric-l">Vencidos</div></div>'+
+      '<div class="metric"><div class="metric-v" style="color:var(--warn)">'+hoy+'</div><div class="metric-l">Hoy</div></div>'+
+      '<div class="metric"><div class="metric-v">'+prox+'</div><div class="metric-l">Esta semana</div></div>'+
+    '</div>'+
+    (venc>0?'<div style="background:#fef0f0;border:1px solid #fca5a5;border-radius:10px;padding:11px 16px;margin-bottom:14px;display:flex;align-items:center;gap:12px">'+
+      '<i class="ti ti-alert-circle" style="color:var(--red);font-size:18px;flex-shrink:0"></i>'+
+      '<div style="flex:1;font-size:12px;color:var(--red);font-weight:500">'+venc+' control(es) vencido(s) — pacientes por contactar</div>'+
+      '<button class="btn btn-sm" onclick="nav(\'alertas\')">Ver todos</button>'+
+    '</div>':'')+
+    '<div style="background:var(--tq-ll);border:1px solid var(--tq-l);border-radius:10px;padding:10px 16px;margin-bottom:14px;display:flex;align-items:center;gap:12px">'+
+      '<i class="ti ti-brand-google-drive" style="color:#0f9d58;font-size:18px"></i>'+
+      '<div style="flex:1;font-size:11px;color:#555">Sincronización con Google Sheets</div>'+
+      '<button class="btn btn-sheets btn-sm" onclick="syncToSheets()"><i class="ti ti-refresh"></i> Sincronizar</button>'+
+      '<a href="'+SHEET_URL+'" target="_blank" class="btn btn-sm" style="font-size:11px">Ver Sheet</a>'+
+    '</div>'+
+    '<div class="grid2">'+
+      '<div class="card"><div class="card-title"><i class="ti ti-clock"></i> Próximos controles</div>'+
+        al.filter(a=>a.type!=='vencido'&&a.type!=='futuro').slice(0,5).map(a=>
+          '<div class="alert-row '+(a.type==='hoy'?'ar-yel':'ar-grn')+'" onclick="openPt(\''+a.pid+'\')">'+
+            '<div style="flex:1"><div style="font-weight:500;font-size:12px">'+a.name+'</div>'+
+            '<div style="font-size:10px;color:#aaa">'+a.proc+' — '+fd(a.fecha)+(a.tel?' · '+a.tel:'')+'</div></div>'+
+            '<span class="badge '+(a.type==='hoy'?'bw':'bg')+'">'+fd(a.fecha)+'</span>'+
+          '</div>'
+        ).join('')||'<div style="font-size:12px;color:#ccc">Sin controles próximos</div>'+
+      '</div>'+
+      '<div class="card"><div class="card-title"><i class="ti ti-users"></i> Últimos pacientes</div>'+
+        pts.slice(-5).reverse().map(p=>
+          '<div class="pt-row" onclick="openPt(\''+p.id+'\')">'+
+            '<div class="avatar">'+ini(p.nombre)+'</div>'+
+            '<div style="flex:1"><div style="font-weight:500;font-size:12px">'+p.nombre+'</div>'+
+            '<div style="margin-top:2px">'+rsBadges(p,2)+'</div></div>'+
+          '</div>'
+        ).join('')||'<div style="font-size:12px;color:#ccc">Sin pacientes</div>'+
+      '</div>'+
+    '</div>';
+}
+
+// ═══════════════════════════════════════════════════════════
+// CONTROLES PROGRAMADOS
+// ═══════════════════════════════════════════════════════════
+function pgAlertas(c){
+  const al=getAlerts();
+  const grps={
+    vencido:{lbl:'VENCIDOS — Contactar urgente',cls:'ar-red',bc:'var(--red)',items:[]},
+    hoy:{lbl:'HOY',cls:'ar-yel',bc:'var(--warn)',items:[]},
+    prox7:{lbl:'ESTA SEMANA',cls:'ar-grn',bc:'var(--ok)',items:[]},
+    prox30:{lbl:'ESTE MES',cls:'ar-blu',bc:'#aaa',items:[]},
+    futuro:{lbl:'FUTUROS',cls:'ar-blu',bc:'#ccc',items:[]},
+  };
+  al.forEach(a=>{if(grps[a.type])grps[a.type].items.push(a);});
+  let html='<div style="margin-bottom:14px;font-size:11px;color:#aaa">Total pendientes: '+al.length+' &nbsp;·&nbsp; Urgentes: <strong style="color:var(--red)">'+(grps.vencido.items.length+grps.hoy.items.length)+'</strong></div>';
+  Object.values(grps).forEach(g=>{
+    if(!g.items.length)return;
+    html+='<div class="card"><div class="card-title" style="color:'+g.bc+'"><i class="ti ti-calendar-clock"></i> '+g.lbl+' ('+g.items.length+')</div>';
+    g.items.forEach(a=>{
+      html+='<div class="alert-row '+g.cls+'" onclick="openPt(\''+a.pid+'\')">'+
+        '<div style="flex:1">'+
+          '<div style="font-weight:500;font-size:12px">'+a.name+'</div>'+
+          '<div style="font-size:10px;color:#aaa">'+a.proc+'</div>'+
+          '<div style="font-size:10px;color:#888;margin-top:1px">📅 <strong>'+fd(a.fecha)+'</strong>'+
+            (a.tel?' &nbsp;·&nbsp; 📞 <a href="tel:'+a.tel+'" onclick="event.stopPropagation()" style="color:var(--tq);text-decoration:none">'+a.tel+'</a>':' &nbsp;·&nbsp; Sin teléfono')+
+          '</div>'+
+          (a.rs.length?'<div style="margin-top:4px">'+a.rs.slice(0,3).map(r=>'<span class="badge '+r.c+'" style="font-size:9px;margin-right:2px"><i class="ti '+r.i+'" style="font-size:8px"></i> '+r.l+'</span>').join('')+'</div>':'')+
+        '</div>'+
+        '<div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex-shrink:0">'+
+          (a.type==='vencido'||a.type==='hoy'?
+            '<button class="btn btn-primary btn-sm" onclick="event.stopPropagation();markCtrl(\''+a.pid+'\',\''+a.cid+'\',\'completado\')">Asistió</button>'+
+            '<button class="btn btn-sm" style="color:var(--red);border-color:#fca5a5;font-size:10px" onclick="event.stopPropagation();markCtrl(\''+a.pid+'\',\''+a.cid+'\',\'no_asistio\')">No asistió</button>'
+          :'')+
+        '</div>'+
+      '</div>';
+    });
+    html+='</div>';
+  });
+  if(!al.length)html+='<div class="card" style="text-align:center;padding:32px;color:#ccc"><i class="ti ti-calendar-check" style="font-size:28px;display:block;margin-bottom:8px"></i>Sin controles programados</div>';
+  c.innerHTML=html;
+}
+
+// ═══════════════════════════════════════════════════════════
+// LISTA PACIENTES
+// ═══════════════════════════════════════════════════════════
+function pgPacientes(c){
+  const pts=Object.values(S.patients);
+  let h='<div class="card">'+
+    '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">'+
+      '<div class="card-title" style="margin:0"><i class="ti ti-users"></i> '+pts.length+' paciente(s)</div>'+
+      '<button class="btn btn-sheets btn-sm" onclick="syncToSheets()"><i class="ti ti-refresh"></i> Sincronizar</button>'+
+    '</div>'+
+    '<div style="background:var(--tq-ll);border:1px solid var(--tq-l);border-radius:8px;padding:7px 14px;margin-bottom:12px;font-size:11px;color:var(--tq-d)">'+
+      '🔍 Usa la barra de búsqueda arriba por nombre o DNI</div>';
+  if(!pts.length)h+='<div style="padding:32px;text-align:center;color:#ccc">Sin pacientes. Clic en "+ Nuevo"</div>';
+  pts.forEach(p=>{
+    const rs=getRiesgos(p);
+    const alPend=getAlerts().some(a=>a.pid===p.id&&(a.type==='vencido'||a.type==='hoy'));
+    h+='<div class="pt-row" onclick="openPt(\''+p.id+'\')">'+
+      '<div class="avatar">'+ini(p.nombre)+'</div>'+
+      '<div style="flex:1">'+
+        '<div style="display:flex;align-items:center;gap:7px;flex-wrap:wrap">'+
+          '<span style="font-weight:500;font-size:13px">'+p.nombre+'</span>'+
+          (alPend?'<span class="badge bd" style="font-size:9px">Control pendiente</span>':'')+
+        '</div>'+
+        '<div style="font-size:10px;color:#bbb;margin-top:2px">'+p.id+' · DNI: '+(p.dni||'--')+' · '+age(p.fechaNac)+' años · '+(p.especialidad||'General')+(p.tel?' · '+p.tel:'')+'</div>'+
+        (rs.length?'<div style="margin-top:3px">'+rsBadges(p,4)+'</div>':'')+
+      '</div>'+
+      '<i class="ti ti-chevron-right" style="color:#ddd;margin-left:8px;flex-shrink:0"></i>'+
+    '</div>';
+  });
+  h+='</div>';
+  c.innerHTML=h;
+}
+
+// ═══════════════════════════════════════════════════════════
+// NUEVO / EDITAR PACIENTE
+// ═══════════════════════════════════════════════════════════
+function pgNuevo(c,edit){
+  const p=edit?S.patients[edit]:{};
+  c.innerHTML='<div class="card"><div class="card-title"><i class="ti ti-user-plus"></i>'+(edit?'Editar paciente':'Nuevo paciente')+'</div>'+
+    '<div class="grid3">'+
+      '<div class="form-row"><label>Nombres y apellidos *</label><input id="f_nom" value="'+esc(p.nombre||'')+'" /></div>'+
+      '<div class="form-row"><label>DNI / Código</label><input id="f_dni" value="'+esc(p.dni||'')+'" /></div>'+
+      '<div class="form-row"><label>Fecha de nacimiento</label><input type="date" id="f_fn" value="'+(p.fechaNac||'')+'" oninput="document.getElementById(\'f_age\').textContent=this.value?\'Edad: \'+age(this.value)+\' años\':\'\'" /></div>'+
+    '</div>'+
+    '<div id="f_age" style="font-size:11px;color:var(--tq);margin-bottom:8px">'+(p.fechaNac?'Edad: '+age(p.fechaNac)+' años':'')+'</div>'+
+    '<div class="grid3">'+
+      '<div class="form-row"><label>Sexo</label><select id="f_sex"><option value="">--</option><option '+(p.sexo==='Femenino'?'selected':'')+'>Femenino</option><option '+(p.sexo==='Masculino'?'selected':'')+'>Masculino</option></select></div>'+
+      '<div class="form-row"><label>Teléfono</label><input id="f_tel" value="'+esc(p.tel||'')+'" placeholder="Ej: 951234567" /></div>'+
+      '<div class="form-row"><label>Especialidad</label><select id="f_esp"><option>General</option><option>Periodoncia</option><option>Implantología</option><option>Ortodoncia</option><option>Endodoncia</option><option>Cirugía oral</option><option>Rehabilitación oral</option><option>Odontopediatría</option></select></div>'+
+    '</div>'+
+    '<div class="grid2">'+
+      '<div class="form-row"><label>Profesional tratante</label><select id="f_prof">'+getProfOpts(p.profesional||'')+'</select></div>'+
+      '<div class="form-row"><label>Motivo de consulta</label><input id="f_mot" value="'+esc(p.motivo||'')+'" /></div>'+
+    '</div>'+
+    '<div class="divider"></div><div class="card-title"><i class="ti ti-heartbeat"></i> Anamnesis</div>'+
+    '<div class="grid2">'+
+      '<div class="form-row"><label>Antecedentes médicos</label><textarea id="f_ant" rows="3" placeholder="Ej: diabetes tipo 2, hipertensión...">'+(p.antecedentes||'')+'</textarea></div>'+
+      '<div class="form-row"><label>Medicamentos actuales</label><textarea id="f_med" rows="3" placeholder="Ej: metformina 500mg, losartán...">'+(p.medicamentos||'')+'</textarea></div>'+
+    '</div>'+
+    '<div class="grid3">'+
+      '<div class="form-row"><label>Alergias</label><input id="f_alg" value="'+esc(p.alergias||'')+'" placeholder="Ej: penicilina, látex" /></div>'+
+      '<div class="form-row"><label>Hábitos</label><input id="f_hab" value="'+esc(p.habitos||'')+'" placeholder="Tabaco, alcohol..." /></div>'+
+      '<div class="form-row"><label>Última visita previa</label><input type="date" id="f_uv" value="'+(p.ultimaVisita||'')+'" /></div>'+
+    '</div>'+
+    '<div class="divider"></div><div class="card-title"><i class="ti ti-stethoscope"></i> Examen clínico</div>'+
+    '<div class="grid4">'+
+      '<div class="form-row"><label>Presión arterial</label><input id="f_pa" placeholder="120/80" value="'+esc(p.pa||'')+'" /></div>'+
+      '<div class="form-row"><label>Frec. cardíaca</label><input id="f_fc" placeholder="72 bpm" value="'+esc(p.fc||'')+'" /></div>'+
+      '<div class="form-row"><label>Peso (kg)</label><input id="f_pe" value="'+esc(p.peso||'')+'" /></div>'+
+      '<div class="form-row"><label>Talla (cm)</label><input id="f_ta" value="'+esc(p.talla||'')+'" /></div>'+
+    '</div>'+
+    '<div class="grid2">'+
+      '<div class="form-row"><label>Extraoral</label><textarea id="f_ext" rows="2">'+(p.extraoral||'')+'</textarea></div>'+
+      '<div class="form-row"><label>Intraoral</label><textarea id="f_int" rows="2">'+(p.intraoral||'')+'</textarea></div>'+
+    '</div>'+
+    '<div class="divider"></div><div class="card-title"><i class="ti ti-clipboard-list"></i> Diagnóstico y plan</div>'+
+    '<div class="grid2">'+
+      '<div class="form-row"><label>Diagnóstico</label><textarea id="f_dx" rows="2">'+(p.diagnostico||'')+'</textarea></div>'+
+      '<div class="form-row"><label>Plan de tratamiento</label><textarea id="f_plan" rows="2">'+(p.plan||'')+'</textarea></div>'+
+    '</div>'+
+    '<div class="grid2">'+
+      '<div class="form-row"><label>Presupuesto total (S/)</label><input type="number" id="f_pre" value="'+(p.presupuesto||'')+'" /></div>'+
+      '<div class="form-row"><label>Observaciones</label><input id="f_obs" value="'+esc(p.observaciones||'')+'" /></div>'+
+    '</div>'+
+    '<div style="display:flex;gap:10px;margin-top:10px">'+
+      '<button class="btn btn-primary" onclick="savePac(\''+(edit||'')+'\')">'+(edit?'Actualizar paciente':'Guardar paciente')+'</button>'+
+      '<button class="btn" onclick="nav(\'pacientes\')">Cancelar</button>'+
+    '</div></div>';
+  if(edit&&p){
+    const el=document.getElementById('f_esp');
+    if(el)el.value=p.especialidad||'General';
+  }
+}
+
+function savePac(editId){
+  const nom=document.getElementById('f_nom').value.trim();
+  if(!nom){alert('El nombre es obligatorio');return;}
+  const id=editId||genId();
+  const p={id,nombre:nom,dni:document.getElementById('f_dni').value,fechaNac:document.getElementById('f_fn').value,sexo:document.getElementById('f_sex').value,tel:document.getElementById('f_tel').value,especialidad:document.getElementById('f_esp').value,profesional:document.getElementById('f_prof').value,motivo:document.getElementById('f_mot').value,antecedentes:document.getElementById('f_ant').value,medicamentos:document.getElementById('f_med').value,alergias:document.getElementById('f_alg').value,habitos:document.getElementById('f_hab').value,ultimaVisita:document.getElementById('f_uv').value,pa:document.getElementById('f_pa').value,fc:document.getElementById('f_fc').value,peso:document.getElementById('f_pe').value,talla:document.getElementById('f_ta').value,extraoral:document.getElementById('f_ext').value,intraoral:document.getElementById('f_int').value,diagnostico:document.getElementById('f_dx').value,plan:document.getElementById('f_plan').value,presupuesto:document.getElementById('f_pre').value,observaciones:document.getElementById('f_obs').value,fechaRegistro:today()};
+  S.patients[id]=p;
+  if(!S.sessions[id])S.sessions[id]=[];
+  if(!S.payments[id])S.payments[id]=[];
+  if(!S.controls[id])S.controls[id]=[];
+  if(!S.toothData[id])S.toothData[id]={};
+  if(!S.examenes[id])S.examenes[id]=[];
+  saveL();
+  showToast('✓ Paciente guardado','#27ae60');
+  gsSave('savePaciente',p);
+  openPt(id);
+}
+
+// ═══════════════════════════════════════════════════════════
+// FICHA DEL PACIENTE
+// ═══════════════════════════════════════════════════════════
+function pgFicha(c,pid){
+  const p=S.patients[pid]; if(!p)return;
+  const rs=getRiesgos(p);
+  let h='<div style="display:flex;align-items:flex-start;gap:14px;margin-bottom:16px">'+
+    '<div class="avatar" style="width:46px;height:46px;font-size:15px;flex-shrink:0">'+ini(p.nombre)+'</div>'+
+    '<div style="flex:1">'+
+      '<div style="font-size:17px;font-weight:300">'+p.nombre+'</div>'+
+      '<div style="font-size:10px;color:#bbb;margin-top:3px">'+p.id+' · DNI: '+(p.dni||'--')+' · '+age(p.fechaNac)+' años · '+(p.sexo||'')+' · '+(p.especialidad||'General')+(p.tel?' · '+p.tel:'')+'</div>'+
+    '</div>'+
+    '<button class="btn btn-sm" onclick="pgNuevo(document.getElementById(\'pageContent\'),\''+pid+'\');document.getElementById(\'pageTitle\').textContent=\'Editar paciente\'"><i class="ti ti-edit"></i> Editar</button>'+
+    '<button class="btn btn-sm" onclick="nav(\'pacientes\')"><i class="ti ti-arrow-left"></i> Volver</button>'+
+  '</div>';
+  if(rs.length){
+    h+='<div style="background:#fff8f8;border:1.5px solid #fca5a5;border-radius:10px;padding:12px 16px;margin-bottom:14px">'+
+      '<div style="font-size:9px;font-weight:500;color:var(--red);text-transform:uppercase;letter-spacing:1px;margin-bottom:7px"><i class="ti ti-shield-exclamation"></i> Riesgo sistémico</div>'+
+      '<div style="display:flex;flex-wrap:wrap;gap:5px;margin-bottom:6px">'+rsBadges(p)+'</div>'+
+      (p.alergias&&p.alergias!=='NKDA'?'<div style="font-size:11px;color:#b91c1c;margin-top:4px"><strong>⚠ Alergias:</strong> '+p.alergias+'</div>':'')+
+      (p.medicamentos?'<div style="font-size:11px;color:#92400e;margin-top:3px"><strong>💊 Medicamentos:</strong> '+p.medicamentos+'</div>':'')+
+    '</div>';
+  }
+  h+='<div class="tab-bar">'+
+    ['hc','odonto','sesiones','controles','economia','examenes'].map((t,i)=>{
+      const lbl=['Historia','Odontograma','Sesiones','Controles','Economía','Exámenes'][i];
+      return '<div class="tab '+(curTab===t?'active':'')+'" onclick="setTab(\''+t+'\',\''+pid+'\')">'+lbl+'</div>';
+    }).join('')+
+  '</div><div id="tabContent"></div>';
+  c.innerHTML=h;
+  renderTab(curTab,pid);
+}
+function setTab(t,pid){curTab=t;document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));event.target.classList.add('active');renderTab(t,pid);}
+function renderTab(t,pid){
+  const tc=document.getElementById('tabContent');if(!tc)return;
+  if(t==='hc')tabHC(tc,pid);
+  else if(t==='odonto')tabOdonto(tc,pid);
+  else if(t==='sesiones')tabSesiones(tc,pid);
+  else if(t==='controles')tabControles(tc,pid);
+  else if(t==='economia')tabEconomia(tc,pid);
+  else if(t==='examenes')tabExamenes(tc,pid);
+}
+
+// ═══════════════════════════════════════════════════════════
+// TAB HC
+// ═══════════════════════════════════════════════════════════
+function tabHC(tc,pid){
+  const p=S.patients[pid];
+  tc.innerHTML='<div class="grid2">'+
+    '<div class="card"><div class="card-title"><i class="ti ti-clipboard"></i> Datos personales</div><table style="width:100%;font-size:12px">'+
+      [['DNI',p.dni],['Fecha nac.',fd(p.fechaNac)],['Teléfono',p.tel],['Motivo',p.motivo],['Registro',fd(p.fechaRegistro)]].map(([l,v])=>'<tr><td style="color:#bbb;padding:5px 0;width:42%">'+l+'</td><td>'+(v||'--')+'</td></tr>').join('')+
+    '</table></div>'+
+    '<div class="card"><div class="card-title"><i class="ti ti-heartbeat"></i> Signos vitales</div><table style="width:100%;font-size:12px">'+
+      [['PA',p.pa],['FC',p.fc],['Peso/Talla',(p.peso||'?')+' kg / '+(p.talla||'?')+' cm'],['IMC',p.peso&&p.talla?((parseFloat(p.peso)/Math.pow(parseFloat(p.talla)/100,2)).toFixed(1)):'--']].map(([l,v])=>'<tr><td style="color:#bbb;padding:5px 0;width:42%">'+l+'</td><td>'+(v||'--')+'</td></tr>').join('')+
+    '</table></div></div>'+
+    '<div class="card"><div class="card-title"><i class="ti ti-notes"></i> Anamnesis</div><div class="grid3">'+
+      [['Antecedentes',p.antecedentes],['Medicamentos',p.medicamentos],['Alergias',p.alergias||'NKDA'],['Hábitos',p.habitos],['Extraoral',p.extraoral],['Intraoral',p.intraoral]].map(([l,v])=>'<div><div style="font-size:9px;color:#bbb;margin-bottom:4px;text-transform:uppercase">'+l+'</div><div style="font-size:12px;line-height:1.6">'+(v||'Sin registro')+'</div></div>').join('')+
+    '</div></div>'+
+    '<div class="grid2">'+
+      '<div class="card"><div class="card-title">Diagnóstico</div><div style="font-size:12px;line-height:1.7">'+(p.diagnostico||'Sin registro')+'</div></div>'+
+      '<div class="card"><div class="card-title">Plan de tratamiento</div><div style="font-size:12px;line-height:1.7">'+(p.plan||'Sin registro')+'</div></div>'+
+    '</div>';
+}
+
+// ═══════════════════════════════════════════════════════════
+// ODONTOGRAMA — REDISEÑADO
+// Condiciones por PIEZA (no por superficie)
+// Ausente = pieza entera ausente
+// Implante, Corona = pieza entera
+// ═══════════════════════════════════════════════════════════
+const CONDS=[
+  {k:'sano',    l:'Sano',      s:'S',  col:'#27ae60',bg:'#edfaf3'},
+  {k:'caries',  l:'Caries',    s:'C',  col:'#c0392b',bg:'#ffd6d6'},
+  {k:'resina',  l:'Resina',    s:'Re', col:'#2980b9',bg:'#c8e6ff'},
+  {k:'amalgama',l:'Amalgama',  s:'Am', col:'#7f8c8d',bg:'#e0e0e0'},
+  {k:'corona',  l:'Corona',    s:'Co', col:'#8e44ad',bg:'#e8d5ff'},
+  {k:'endo',    l:'Endodoncia',s:'En', col:'#e67e22',bg:'#fff3cd'},
+  {k:'implante',l:'Implante',  s:'Im', col:'#16a085',bg:'#d5ffe8'},
+  {k:'ausente', l:'Ausente',   s:'X',  col:'#c0392b',bg:'#f5f5f5'},
+  {k:'sellante',l:'Sellante',  s:'Se', col:'#2980b9',bg:'#d4edda'},
+  {k:'fractura',l:'Fractura',  s:'Fr', col:'#d35400',bg:'#ffe0cc'},
+  {k:'pf',      l:'Pont./Fijo',s:'PF', col:'#6c3483',bg:'#f3e8ff'},
+];
+const CMAP={}; CONDS.forEach(c=>{CMAP[c.k]=c;});
+// Piezas donde aplica solo condición global (no superficies)
+const PERM_ARC=[[18,17,16,15,14,13,12,11],[21,22,23,24,25,26,27,28],[48,47,46,45,44,43,42,41],[31,32,33,34,35,36,37,38]];
+const TEMP_ARC=[[55,54,53,52,51],[61,62,63,64,65],[85,84,83,82,81],[71,72,73,74,75]];
+
+let _selTooth=null;
+
+function tthGetCond(pid,n){
+  const td=S.toothData[pid]||{};
+  return (td[n]&&td[n].cond)||null;
+}
+function tthBox(pid,n){
+  const cond=tthGetCond(pid,n);
+  const ci=cond?CMAP[cond]:null;
+  const bg=ci?ci.bg:'#fff';
+  const bc=ci?ci.col:'#ddd';
+  const lbl=ci?ci.s:'';
+  const isSel=_selTooth===n;
+  return '<div class="tooth-wrap" onclick="odTooth('+n+',\''+pid+'\')">'+
+    '<div class="tooth-num">'+n+'</div>'+
+    '<div class="tooth-box" id="tb_'+n+'" style="background:'+bg+';border-color:'+bc+';color:'+bc+(isSel?';box-shadow:0 0 0 2.5px var(--tq)':'')+'">'+lbl+'</div>'+
+  '</div>';
+}
+
+function tabOdonto(tc,pid){
+  let h='<div class="card">'+
+    '<div class="card-title"><i class="ti ti-tooth"></i> Odontograma — Notación FDI</div>'+
+    '<div style="font-size:11px;color:#aaa;margin-bottom:12px">Haz clic en una pieza para asignar su condición. <strong>Ausente</strong> = pieza extraída. <strong>Implante/Corona</strong> = pieza completa.</div>'+
+    '<div style="overflow-x:auto;padding:6px 0">'+
+      '<div style="font-size:8px;color:#ccc;text-align:center;text-transform:uppercase;letter-spacing:1.5px;margin-bottom:5px">Superior permanente</div>'+
+      '<div class="tooth-row">'+PERM_ARC[0].map(n=>tthBox(pid,n)).join('')+'<div style="width:14px"></div>'+PERM_ARC[1].map(n=>tthBox(pid,n)).join('')+'</div>'+
+      '<div class="tooth-row">'+PERM_ARC[2].map(n=>tthBox(pid,n)).join('')+'<div style="width:14px"></div>'+PERM_ARC[3].map(n=>tthBox(pid,n)).join('')+'</div>'+
+      '<div style="font-size:8px;color:#ccc;text-align:center;text-transform:uppercase;letter-spacing:1.5px;margin:3px 0 10px">Inferior permanente</div>'+
+      '<div style="border-top:1px dashed var(--gl);margin:6px 0 12px"></div>'+
+      '<div style="font-size:8px;color:#ccc;text-align:center;text-transform:uppercase;letter-spacing:1.5px;margin-bottom:5px">Superior temporal</div>'+
+      '<div class="tooth-row">'+TEMP_ARC[0].map(n=>tthBox(pid,n)).join('')+'<div style="width:20px"></div>'+TEMP_ARC[1].map(n=>tthBox(pid,n)).join('')+'</div>'+
+      '<div class="tooth-row">'+TEMP_ARC[2].map(n=>tthBox(pid,n)).join('')+'<div style="width:20px"></div>'+TEMP_ARC[3].map(n=>tthBox(pid,n)).join('')+'</div>'+
+      '<div style="font-size:8px;color:#ccc;text-align:center;text-transform:uppercase;letter-spacing:1.5px;margin-top:3px">Inferior temporal</div>'+
+    '</div>'+
+    // PANEL DE EDICIÓN
+    '<div id="odPanel" style="display:none;margin-top:14px;border-top:1px solid var(--gl);padding-top:14px">'+
+      '<div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">'+
+        '<div style="font-size:15px;font-weight:300;color:var(--tq)">Pieza <strong id="odNum"></strong></div>'+
+        '<span id="odCurr" style="font-size:11px;color:#aaa"></span>'+
+        '<button class="btn btn-sm" style="margin-left:auto" onclick="odClose()"><i class="ti ti-x"></i></button>'+
+      '</div>'+
+      '<div style="font-size:10px;color:#aaa;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">Selecciona la condición de esta pieza:</div>'+
+      '<div class="cond-row" id="condRow"></div>'+
+      '<div style="margin-top:4px" id="obsRow" style="display:none">'+
+        '<div style="font-size:10px;color:#aaa;text-transform:uppercase;letter-spacing:1px;margin-bottom:5px">Material / Observación (opcional)</div>'+
+        '<input id="odObs" placeholder="Ej: resina clase II, composite A2..." style="max-width:400px;margin-bottom:10px" />'+
+      '</div>'+
+      '<button class="btn btn-primary" onclick="odSave(\''+pid+'\')"><i class="ti ti-device-floppy"></i> Guardar pieza</button>'+
+      '<button class="btn btn-sm" style="margin-left:8px;color:var(--red);border-color:#fca5a5" onclick="odClear(\''+pid+'\')"><i class="ti ti-eraser"></i> Limpiar pieza</button>'+
+    '</div>'+
+    // LEYENDA
+    '<div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:14px;padding-top:12px;border-top:1px solid var(--gl)">'+
+      CONDS.map(c=>'<div style="display:flex;align-items:center;gap:4px;font-size:10px;color:#888"><div style="width:14px;height:14px;border-radius:3px;background:'+c.bg+';border:1.5px solid '+c.col+'"></div>'+c.l+'</div>').join('')+
+    '</div></div>';
+  tc.innerHTML=h;
+}
+
+let _odActiveCond=null;
+function odTooth(n,pid){
+  _selTooth=n; _odActiveCond=null;
+  // highlight
+  document.querySelectorAll('.tooth-box').forEach(b=>b.style.boxShadow='');
+  const tb=document.getElementById('tb_'+n);
+  if(tb)tb.style.boxShadow='0 0 0 2.5px var(--tq)';
+  const panel=document.getElementById('odPanel');
+  panel.style.display='block';
+  document.getElementById('odNum').textContent=n;
+  const cur=tthGetCond(pid,n);
+  const ci=cur?CMAP[cur]:null;
+  document.getElementById('odCurr').textContent=ci?'Actual: '+ci.l:'Sin condición registrada';
+  // obs
+  const td=S.toothData[pid]||{};
+  const obs=(td[n]&&td[n].obs)||'';
+  document.getElementById('odObs').value=obs;
+  // botones condición
+  document.getElementById('condRow').innerHTML=CONDS.map(c=>{
+    const isCur=cur===c.k;
+    return '<div class="cond-pill '+(isCur?'sel':'')+'" id="cp_'+c.k+'" '+
+      'style="'+(isCur?'background:'+c.col+';color:#fff;border-color:'+c.col:'border-color:'+c.col+';color:'+c.col)+'" '+
+      'onclick="odSelCond(\''+c.k+'\',\''+c.col+'\')">'+
+      '<strong>'+c.s+'</strong> '+c.l+
+    '</div>';
+  }).join('');
+  if(isCur)_odActiveCond=cur;
+  panel.scrollIntoView({behavior:'smooth',block:'nearest'});
+}
+function odSelCond(k,col){
+  _odActiveCond=k;
+  document.querySelectorAll('.cond-pill').forEach(b=>{
+    const ck=b.id.replace('cp_','');
+    const ci=CMAP[ck];
+    b.classList.remove('sel');
+    b.style.background='#fff'; b.style.color=ci.col; b.style.borderColor=ci.col;
+  });
+  const btn=document.getElementById('cp_'+k);
+  if(btn){btn.classList.add('sel');btn.style.background=col;btn.style.color='#fff';btn.style.borderColor=col;}
+}
+function odSave(pid){
+  if(!_selTooth||!_odActiveCond){showToast('Selecciona una pieza y condición','#e67e22');return;}
+  if(!S.toothData[pid])S.toothData[pid]={};
+  S.toothData[pid][_selTooth]={cond:_odActiveCond,obs:document.getElementById('odObs').value};
+  saveL();
+  showToast('✓ Pieza '+_selTooth+' guardada: '+CMAP[_odActiveCond].l,'#27ae60');
+  gsSave('saveOdonto',{pacienteId:pid,pieza:_selTooth,cond:_odActiveCond,obs:S.toothData[pid][_selTooth].obs});
+  // refrescar visual
+  const tb=document.getElementById('tb_'+_selTooth);
+  if(tb){
+    const ci=CMAP[_odActiveCond];
+    tb.style.background=ci.bg; tb.style.borderColor=ci.col; tb.style.color=ci.col;
+    tb.textContent=ci.s;
+  }
+  document.getElementById('odCurr').textContent='Actual: '+CMAP[_odActiveCond].l;
+}
+function odClear(pid){
+  if(!_selTooth)return;
+  if(S.toothData[pid])delete S.toothData[pid][_selTooth];
+  saveL();
+  showToast('Pieza '+_selTooth+' limpiada','#e67e22');
+  const tb=document.getElementById('tb_'+_selTooth);
+  if(tb){tb.style.background='#fff';tb.style.borderColor='#ddd';tb.style.color='#ddd';tb.textContent='';}
+  document.getElementById('odCurr').textContent='Sin condición registrada';
+  document.querySelectorAll('.cond-pill').forEach(b=>{b.classList.remove('sel');const ci=CMAP[b.id.replace('cp_','')];b.style.background='#fff';b.style.color=ci.col;b.style.borderColor=ci.col;});
+  _odActiveCond=null;
+}
+function odClose(){_selTooth=null;document.getElementById('odPanel').style.display='none';document.querySelectorAll('.tooth-box').forEach(b=>b.style.boxShadow='');}
+
+// ═══════════════════════════════════════════════════════════
+// SESIONES
+// ═══════════════════════════════════════════════════════════
+const INTV={'Profilaxis/Limpieza':'6 meses','RAR/Raspado':'6 semanas','Cirugía periodontal':'1 semana','Injerto conectivo':'1 mes','Alargamiento corona':'3 meses','Extracción':'7 dias','Implante':'1 semana','Ortodoncia':'4 semanas','Mantenimiento periodontal':'3 meses'};
+function tabSesiones(tc,pid){
+  const ss=S.sessions[pid]||[];
+  tc.innerHTML='<div class="card"><div class="card-title"><i class="ti ti-calendar-plus"></i> Nueva sesión</div>'+
+    '<div class="grid2">'+
+      '<div class="form-row"><label>Fecha</label><input type="date" id="s_f" value="'+today()+'" /></div>'+
+      '<div class="form-row"><label>Procedimiento</label><select id="s_p">'+Object.keys(INTV).map(k=>'<option>'+k+'</option>').join('')+'<option>Otro</option></select></div>'+
+    '</div>'+
+    '<div class="grid2">'+
+      '<div class="form-row"><label>Piezas tratadas</label><input id="s_pz" placeholder="Ej: 1.8, 1.7, 3.6" /></div>'+
+      '<div class="form-row"><label>Profesional</label><select id="s_op">'+getProfOpts(S.patients[pid]&&S.patients[pid].profesional||'')+'</select></div>'+
+    '</div>'+
+    '<div class="form-row"><label>Evolución / observaciones</label><textarea id="s_ob" rows="2"></textarea></div>'+
+    '<div class="grid2">'+
+      '<div class="form-row"><label>Monto cobrado (S/)</label><input type="number" id="s_mo" placeholder="0.00" /></div>'+
+      '<div class="form-row"><label>Método de pago</label><select id="s_me" onchange="document.getElementById(\'clpRow\').style.display=this.value.includes(\'CLP\')?\'block\':\'none\'"><option>Efectivo</option><option>Yape/Plin</option><option>Transferencia</option><option>Pesos chilenos (CLP)</option></select></div>'+
+    '</div>'+
+    '<div id="clpRow" style="display:none" class="grid2">'+
+      '<div class="form-row"><label>Monto en CLP</label><input type="number" id="s_clp" /></div>'+
+      '<div class="form-row"><label>Tipo de cambio CLP/PEN</label><input type="number" id="s_tc" placeholder="0.0040" /></div>'+
+    '</div>'+
+    '<button class="btn btn-primary" onclick="saveSes(\''+pid+'\')"><i class="ti ti-device-floppy"></i> Guardar sesión</button></div>'+
+    '<div class="card"><div class="card-title"><i class="ti ti-history"></i> Historial — '+ss.length+' sesión(es)</div>'+
+    (ss.length===0?'<div style="font-size:12px;color:#ccc">Sin sesiones</div>':'')+
+    [...ss].reverse().map(s=>'<div class="sess-item"><div style="font-size:9px;color:var(--tq);font-weight:500;text-transform:uppercase;letter-spacing:1px">'+fd(s.fecha)+'</div><div style="font-size:13px;font-weight:300;margin:4px 0">'+s.procedimiento+'</div><div style="font-size:11px;color:#aaa">Piezas: '+(s.piezas||'--')+' · '+(s.operador||'--')+'</div>'+(s.observaciones?'<div style="font-size:11px;color:#aaa;margin-top:1px">'+s.observaciones+'</div>':'')+'<span class="badge bi" style="margin-top:5px;display:inline-block">S/ '+parseFloat(s.monto||0).toFixed(2)+' — '+s.metodo+'</span></div>').join('')+'</div>';
+}
+function saveSes(pid){
+  const f=document.getElementById('s_f').value, pr=document.getElementById('s_p').value;
+  if(!f||!pr){alert('Fecha y procedimiento requeridos');return;}
+  let monto=parseFloat(document.getElementById('s_mo').value)||0;
+  const me=document.getElementById('s_me').value;
+  if(me.includes('CLP')){const clp=parseFloat(document.getElementById('s_clp').value)||0,tc=parseFloat(document.getElementById('s_tc').value)||0.004;monto=clp*tc;}
+  const s={id:'S'+Date.now(),fecha:f,procedimiento:pr,piezas:document.getElementById('s_pz').value,operador:document.getElementById('s_op').value,observaciones:document.getElementById('s_ob').value,monto:monto.toFixed(2),metodo:me};
+  if(!S.sessions[pid])S.sessions[pid]=[];
+  S.sessions[pid].push(s);
+  if(monto>0){
+    const pg={id:'P'+Date.now(),fecha:f,monto:monto.toFixed(2),metodo:me,procedimiento:pr};
+    if(!S.payments[pid])S.payments[pid]=[];
+    S.payments[pid].push(pg);
+    gsSave('savePago',Object.assign({},pg,{pacienteId:pid,pacienteNombre:(S.patients[pid]&&S.patients[pid].nombre)||pid}));
+  }
+  const intv=INTV[pr];
+  if(intv){
+    if(!S.controls[pid])S.controls[pid]=[];
+    const ctrl={id:'C'+Date.now(),tipo:'Control post '+pr,fecha:addTime(f,intv),estado:'pendiente',generadoEn:f};
+    S.controls[pid].push(ctrl);
+    gsSave('saveControl',Object.assign({},ctrl,{pacienteId:pid,pacienteNombre:(S.patients[pid]&&S.patients[pid].nombre)||pid}));
+    showToast('Control programado para '+fd(ctrl.fecha),'#00AFC1');
+  }
+  saveL();
+  showToast('✓ Sesión guardada','#27ae60');
+  gsSave('saveSesion',Object.assign({},s,{pacienteId:pid,pacienteNombre:(S.patients[pid]&&S.patients[pid].nombre)||pid}));
+  tabSesiones(document.getElementById('tabContent'),pid);
+}
+
+// ═══════════════════════════════════════════════════════════
+// CONTROLES (tab)
+// ═══════════════════════════════════════════════════════════
+function tabControles(tc,pid){
+  const cs=S.controls[pid]||[], tod=today();
+  tc.innerHTML='<div class="card"><div class="card-title"><i class="ti ti-calendar-plus"></i> Programar control</div>'+
+    '<div class="grid3">'+
+      '<div class="form-row"><label>Descripción</label><input id="c_t" placeholder="Ej: Control post extracción" /></div>'+
+      '<div class="form-row"><label>Fecha programada</label><input type="date" id="c_f" /></div>'+
+      '<div style="display:flex;align-items:flex-end;padding-bottom:10px"><button class="btn btn-primary" onclick="addCtrl(\''+pid+'\')"><i class="ti ti-plus"></i> Agregar</button></div>'+
+    '</div></div>'+
+    '<div class="card"><div class="card-title"><i class="ti ti-calendar-check"></i> Controles ('+cs.length+')</div>'+
+    (cs.length===0?'<div style="font-size:12px;color:#ccc">Sin controles programados</div>':'')+
+    [...cs].sort((a,b)=>a.fecha.localeCompare(b.fecha)).map(c=>{
+      const est=c.fecha<tod&&c.estado==='pendiente'?'vencido':c.fecha===tod&&c.estado==='pendiente'?'hoy':c.estado;
+      return '<div class="ctrl-item"><div><div style="font-weight:500;font-size:12px">'+c.tipo+'</div><div style="font-size:10px;color:#bbb">'+fd(c.fecha)+(c.generadoEn?' · desde '+fd(c.generadoEn):'')+'</div></div>'+
+        '<div style="display:flex;gap:5px;align-items:center"><span class="badge '+(est==='vencido'?'bd':est==='hoy'?'bw':est==='completado'?'bg':'bi')+'">'+est+'</span>'+
+        (c.estado==='pendiente'?'<button class="btn btn-primary btn-sm" onclick="markCtrl(\''+pid+'\',\''+c.id+'\',\'completado\')">Asistió</button><button class="btn btn-sm" style="color:var(--red);border-color:#fca5a5" onclick="markCtrl(\''+pid+'\',\''+c.id+'\',\'no_asistio\')">No asistió</button>':'')+
+        '</div></div>';
+    }).join('')+'</div>';
+}
+function addCtrl(pid){
+  const t=document.getElementById('c_t').value.trim(),f=document.getElementById('c_f').value;
+  if(!t||!f){alert('Complete descripción y fecha');return;}
+  const ctrl={id:'C'+Date.now(),tipo:t,fecha:f,estado:'pendiente'};
+  if(!S.controls[pid])S.controls[pid]=[];
+  S.controls[pid].push(ctrl);
+  saveL();
+  showToast('Control programado para '+fd(f),'#27ae60');
+  gsSave('saveControl',Object.assign({},ctrl,{pacienteId:pid,pacienteNombre:(S.patients[pid]&&S.patients[pid].nombre)||pid}));
+  tabControles(document.getElementById('tabContent'),pid);
+}
+function markCtrl(pid,cid,est){
+  const arr=S.controls[pid]||[];
+  const i=arr.findIndex(c=>c.id===cid);
+  if(i>=0)arr[i].estado=est;
+  saveL();
+  showToast(est==='completado'?'✓ Asistió':'No asistió registrado',est==='completado'?'#27ae60':'#e67e22');
+  gsSave('updateControl',{id:cid,estado:est});
+  tabControles(document.getElementById('tabContent'),pid);
+  updateAC();
+}
+
+// ═══════════════════════════════════════════════════════════
+// ECONOMÍA
+// ═══════════════════════════════════════════════════════════
+function tabEconomia(tc,pid){
+  const p=S.patients[pid], pgs=S.payments[pid]||[];
+  const tot=pgs.reduce((s,pg)=>s+(parseFloat(pg.monto)||0),0);
+  const pre=parseFloat(p.presupuesto)||0, saldo=pre-tot;
+  const pct=pre>0?Math.min(100,Math.round(tot/pre*100)):0;
+  tc.innerHTML='<div class="grid3" style="margin-bottom:14px">'+
+    '<div class="metric"><div class="metric-v">S/ '+pre.toFixed(2)+'</div><div class="metric-l">Presupuesto</div></div>'+
+    '<div class="metric"><div class="metric-v" style="color:var(--ok)">S/ '+tot.toFixed(2)+'</div><div class="metric-l">Total pagado</div></div>'+
+    '<div class="metric"><div class="metric-v" style="color:'+(saldo>0?'var(--warn)':'var(--ok)')+'">S/ '+Math.abs(saldo).toFixed(2)+'</div><div class="metric-l">'+(saldo>0?'Saldo pendiente':'Saldo a favor')+'</div></div>'+
+  '</div>'+
+  '<div class="card"><div class="card-title">Avance de pago</div><div class="prog-bar"><div class="prog-fill" style="width:'+pct+'%"></div></div><div style="font-size:10px;color:#bbb;margin-top:4px">'+pct+'% cancelado</div></div>'+
+  '<div class="card"><div class="card-title">Pagos registrados</div>'+
+    (pgs.length===0?'<div style="font-size:12px;color:#ccc">Sin pagos</div>':'')+
+    [...pgs].reverse().map(pg=>'<div class="pago-row"><div><div style="font-weight:500">'+(pg.procedimiento||'Pago')+'</div><div style="font-size:10px;color:#bbb">'+fd(pg.fecha)+' · '+pg.metodo+'</div></div><span class="badge bg">S/ '+parseFloat(pg.monto).toFixed(2)+'</span></div>').join('')+
+  '</div>'+
+  '<div class="card"><div class="card-title">Recibo y SUNAT</div>'+
+    '<div style="display:flex;gap:10px;flex-wrap:wrap">'+
+      '<button class="btn btn-primary" onclick="genRecibo(\''+pid+'\')"><i class="ti ti-printer"></i> Constancia imprimible</button>'+
+      '<a href="'+SUNAT_URL+'" target="_blank" class="btn btn-danger"><i class="ti ti-external-link"></i> SUNAT — Emitir Recibo x Honorarios</a>'+
+    '</div>'+
+  '</div>';
+}
+
+function genRecibo(pid){
+  const p=S.patients[pid], pgs=S.payments[pid]||[];
+  const tot=pgs.reduce((s,pg)=>s+(parseFloat(pg.monto)||0),0);
+  const ss=S.sessions[pid]||[];
+  const procs=[...new Set(ss.map(s=>s.procedimiento))].join(', ');
+  const w=window.open('','_blank');
+  w.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Constancia Dentalys</title>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500&display=swap" rel="stylesheet">
+  <style>body{font-family:Montserrat,sans-serif;padding:40px;max-width:500px;margin:0 auto;color:#4A4A4A}
+  h1{font-size:24px;font-weight:300;color:#00AFC1;letter-spacing:5px;text-align:center;margin-bottom:4px}
+  .sub{font-size:8px;color:#ccc;letter-spacing:3px;text-transform:uppercase;text-align:center}
+  hr{border:none;border-top:1px solid #eee;margin:14px 0}
+  h2{font-size:12px;font-weight:500;text-align:center;text-transform:uppercase;letter-spacing:1px}
+  table{width:100%;font-size:13px;line-height:2.2;margin-top:10px}
+  td:first-child{color:#aaa;font-weight:300;width:42%}
+  .total{font-size:15px;font-weight:500;color:#00AFC1}
+  .firma{margin-top:50px;text-align:center;font-size:11px;color:#aaa}
+  @media print{button,a{display:none}}</style></head><body>
+  <h1>DENTALYS</h1><div class="sub">Magia en tu Sonrisa</div>
+  <hr><h2>Constancia de Atenciones</h2><hr>
+  <table>
+    <tr><td>Paciente</td><td><strong>${p.nombre}</strong></td></tr>
+    <tr><td>DNI</td><td>${p.dni||'--'}</td></tr>
+    <tr><td>Fecha de emisión</td><td>${new Date().toLocaleDateString('es-PE',{day:'numeric',month:'long',year:'numeric'})}</td></tr>
+    <tr><td>Servicios prestados</td><td>${procs||'--'}</td></tr>
+    <tr><td>N° de sesiones</td><td>${ss.length}</td></tr>
+    <tr><td>Total cancelado</td><td class="total">S/ ${tot.toFixed(2)}</td></tr>
+  </table>
+  <div class="firma"><div style="border-top:1px solid #eee;display:inline-block;padding-top:8px;min-width:200px">${p.profesional||'Clínica Dentalys'}</div></div>
+  <br><br><button onclick="window.print()" style="padding:10px 20px;background:#00AFC1;color:#fff;border:none;border-radius:8px;cursor:pointer;font-family:Montserrat,sans-serif;font-size:13px">🖨 Imprimir</button>
+  <a href="${SUNAT_URL}" target="_blank" style="margin-left:10px;padding:10px 20px;background:#c0392b;color:#fff;border:none;border-radius:8px;text-decoration:none;font-family:Montserrat,sans-serif;font-size:13px">SUNAT — RxH</a>
+  </body></html>`);
+  w.document.close();
+}
+
+// ═══════════════════════════════════════════════════════════
+// EXÁMENES
+// ═══════════════════════════════════════════════════════════
+function tabExamenes(tc,pid){
+  const ex=S.examenes[pid]||[];
+  tc.innerHTML='<div class="card"><div class="card-title"><i class="ti ti-camera"></i> Nuevo examen auxiliar</div>'+
+    '<div class="grid3">'+
+      '<div class="form-row"><label>Tipo</label><select id="e_t"><option>Rx Periapical</option><option>Rx Panorámica</option><option>Rx Bitewing</option><option>CBCT</option><option>Análisis de laboratorio</option><option>Fotografía clínica</option><option>Modelo de estudio</option></select></div>'+
+      '<div class="form-row"><label>Fecha</label><input type="date" id="e_f" value="'+today()+'" /></div>'+
+      '<div class="form-row"><label>Estado</label><select id="e_e"><option>Solicitado</option><option>Recibido</option><option>Analizado</option></select></div>'+
+    '</div>'+
+    '<div class="form-row"><label>Hallazgos</label><textarea id="e_h" rows="2"></textarea></div>'+
+    '<button class="btn btn-primary" onclick="saveEx(\''+pid+'\')"><i class="ti ti-plus"></i> Guardar examen</button></div>'+
+    '<div class="card"><div class="card-title"><i class="ti ti-file-description"></i> Exámenes ('+ex.length+')</div>'+
+    (ex.length===0?'<div style="font-size:12px;color:#ccc">Sin exámenes</div>':'')+
+    [...ex].reverse().map(e=>'<div class="sess-item"><div style="font-size:9px;color:var(--tq);font-weight:500;text-transform:uppercase">'+fd(e.fecha)+'</div><div style="font-size:13px;font-weight:300;margin:3px 0">'+e.tipo+'</div><div style="font-size:11px;color:#aaa">'+(e.hallazgos||'Sin hallazgos')+'</div><span class="badge '+(e.estado==='Analizado'?'bg':e.estado==='Recibido'?'bi':'bw')+'" style="margin-top:5px;display:inline-block">'+e.estado+'</span></div>').join('')+'</div>';
+}
+function saveEx(pid){
+  const ex={id:'E'+Date.now(),tipo:document.getElementById('e_t').value,fecha:document.getElementById('e_f').value,estado:document.getElementById('e_e').value,hallazgos:document.getElementById('e_h').value};
+  if(!S.examenes[pid])S.examenes[pid]=[];
+  S.examenes[pid].push(ex);
+  saveL();
+  showToast('✓ Examen guardado','#27ae60');
+  gsSave('saveExamen',Object.assign({},ex,{pacienteId:pid,pacienteNombre:(S.patients[pid]&&S.patients[pid].nombre)||pid}));
+  tabExamenes(document.getElementById('tabContent'),pid);
+}
+
+// ═══════════════════════════════════════════════════════════
+// CAJA DEL DÍA
+// ═══════════════════════════════════════════════════════════
+function pgCaja(c){
+  const tod=today();
+  const tp=[];
+  Object.entries(S.payments).forEach(([pid,pgs])=>{
+    pgs.forEach(p=>{if(p.fecha===tod)tp.push(Object.assign({},p,{pac:(S.patients[pid]&&S.patients[pid].nombre)||pid}));});
+  });
+  const tH=tp.reduce((s,p)=>s+(parseFloat(p.monto)||0),0);
+  const tS=Object.entries(S.patients).reduce((s,[pid,p])=>{
+    const pg=(S.payments[pid]||[]).reduce((a,pg)=>a+(parseFloat(pg.monto)||0),0);
+    return s+Math.max(0,(parseFloat(p.presupuesto)||0)-pg);
+  },0);
+  c.innerHTML='<div class="grid3" style="margin-bottom:14px">'+
+    '<div class="metric"><div class="metric-v" style="color:var(--ok)">S/ '+tH.toFixed(2)+'</div><div class="metric-l">Ingresos hoy</div></div>'+
+    '<div class="metric"><div class="metric-v">'+tp.length+'</div><div class="metric-l">Transacciones</div></div>'+
+    '<div class="metric"><div class="metric-v" style="color:var(--warn)">S/ '+tS.toFixed(2)+'</div><div class="metric-l">Saldo pendiente total</div></div>'+
+  '</div>'+
+  '<div class="card"><div class="card-title"><i class="ti ti-cash"></i> Movimientos — '+fd(tod)+'</div>'+
+    (tp.length===0?'<div style="font-size:12px;color:#ccc">Sin ingresos hoy</div>':'')+
+    tp.map(p=>'<div class="pago-row"><div><div style="font-weight:500">'+p.pac+'</div><div style="font-size:10px;color:#bbb">'+(p.procedimiento||'Pago')+' · '+p.metodo+'</div></div><span class="badge bg">S/ '+parseFloat(p.monto).toFixed(2)+'</span></div>').join('')+
+    (tp.length>0?'<div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--gl);display:flex;justify-content:space-between;font-size:14px"><span style="font-weight:300">Total del día</span><strong style="color:var(--ok)">S/ '+tH.toFixed(2)+'</strong></div>':'')+
+  '</div>'+
+  '<div class="card"><div class="card-title"><i class="ti ti-lock"></i> Reporte general — Solo administración</div>'+
+    '<div class="admin-lock">'+
+      '<div style="font-size:12px;color:#aaa;margin-bottom:12px">Ingresa la contraseña de administración</div>'+
+      '<div class="form-row" style="max-width:220px;margin:0 auto"><label>Contraseña admin</label><input type="password" id="adminPwd" placeholder="..." onkeydown="if(event.key===\'Enter\')chkAdmin()" /></div>'+
+      '<button class="btn btn-admin" style="margin-top:10px" onclick="chkAdmin()"><i class="ti ti-lock-open"></i> Acceder</button>'+
+      '<div id="adminErr" style="color:var(--red);font-size:11px;margin-top:6px;display:none">Contraseña incorrecta</div>'+
+    '</div>'+
+  '</div>';
+}
+function chkAdmin(){
+  const v=document.getElementById('adminPwd')&&document.getElementById('adminPwd').value;
+  if(v===ADMIN_PASS)showAdminRep();
+  else{const el=document.getElementById('adminErr');if(el)el.style.display='block';}
+}
+function showAdminRep(){
+  const allPgs=Object.values(S.payments).flat();
+  const total=allPgs.reduce((s,p)=>s+(parseFloat(p.monto)||0),0);
+  const byM={};
+  allPgs.forEach(p=>{const m=(p.fecha&&p.fecha.slice(0,7))||'--';byM[m]=(byM[m]||0)+parseFloat(p.monto||0);});
+  const box=document.querySelector('.admin-lock');if(!box)return;
+  box.style.cssText='background:#fff;border:1px solid var(--gl);border-radius:10px;padding:16px';
+  box.innerHTML='<div class="card-title" style="margin-bottom:12px">Reporte de ingresos</div>'+
+    '<div class="grid3" style="margin-bottom:12px">'+
+      '<div class="metric"><div class="metric-v">S/ '+total.toFixed(2)+'</div><div class="metric-l">Total histórico</div></div>'+
+      '<div class="metric"><div class="metric-v">'+allPgs.length+'</div><div class="metric-l">Transacciones</div></div>'+
+      '<div class="metric"><div class="metric-v">'+Object.keys(S.patients).length+'</div><div class="metric-l">Pacientes</div></div>'+
+    '</div>'+
+    Object.entries(byM).sort().map(([m,v])=>'<div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--gl);font-size:12px"><span style="color:#bbb">'+m+'</span><strong>S/ '+v.toFixed(2)+'</strong></div>').join('')+
+    '<div style="margin-top:12px"><a href="'+SHEET_URL+'" target="_blank" class="btn btn-sheets btn-sm"><i class="ti ti-external-link"></i> Ver en Google Sheets</a></div>';
+}
+
+// ═══════════════════════════════════════════════════════════
+// RECIBOS
+// ═══════════════════════════════════════════════════════════
+function pgRecibo(c){
+  const pts=Object.values(S.patients);
+  c.innerHTML='<div class="card"><div class="card-title"><i class="ti ti-receipt"></i> Constancia de atenciones</div>'+
+    '<div class="form-row"><label>Seleccionar paciente</label><select id="r_p" onchange="prevRecibo(this.value)"><option value="">-- seleccionar --</option>'+
+    pts.map(p=>'<option value="'+p.id+'">'+p.nombre+' (DNI: '+(p.dni||'--')+')</option>').join('')+'</select></div>'+
+    '<div id="recPrev"></div></div>'+
+    '<div class="card">'+
+      '<div class="card-title" style="color:#c0392b"><i class="ti ti-building-bank"></i> SUNAT — Recibo por Honorarios Electrónico</div>'+
+      '<div style="font-size:12px;color:#aaa;margin-bottom:12px;line-height:1.6">Emite tu Recibo por Honorarios directamente en el portal oficial de SUNAT. Necesitas tu clave SOL.</div>'+
+      '<a href="'+SUNAT_URL+'" target="_blank" class="btn btn-danger" style="font-size:12px;padding:9px 18px"><i class="ti ti-external-link"></i> Emitir Recibo x Honorarios — SUNAT</a>'+
+    '</div>';
+}
+function prevRecibo(pid){
+  if(!pid)return;
+  const p=S.patients[pid], pgs=S.payments[pid]||[];
+  const tot=pgs.reduce((s,pg)=>s+(parseFloat(pg.monto)||0),0);
+  const ss=S.sessions[pid]||[];
+  const procs=[...new Set(ss.map(s=>s.procedimiento))].join(', ');
+  document.getElementById('recPrev').innerHTML='<div style="border:1px solid var(--gl);border-radius:10px;padding:16px;margin-top:12px;font-size:12px;line-height:2.2">'+
+    '<div style="text-align:center;border-bottom:1px solid var(--gl);padding-bottom:10px;margin-bottom:10px"><div style="font-size:17px;font-weight:300;color:var(--tq);letter-spacing:4px">DENTALYS</div><div style="font-size:10px;font-weight:500;letter-spacing:1px;text-transform:uppercase;margin-top:6px">Constancia de Atenciones</div></div>'+
+    '<table style="width:100%"><tr><td style="color:#bbb">Paciente</td><td><strong>'+p.nombre+'</strong></td></tr><tr><td style="color:#bbb">DNI</td><td>'+(p.dni||'--')+'</td></tr><tr><td style="color:#bbb">Fecha</td><td>'+new Date().toLocaleDateString('es-PE')+'</td></tr><tr><td style="color:#bbb">Servicios</td><td>'+(procs||'--')+'</td></tr><tr><td style="color:#bbb">Sesiones</td><td>'+ss.length+'</td></tr><tr><td style="color:#bbb">Total</td><td><strong style="color:var(--tq)">S/ '+tot.toFixed(2)+'</strong></td></tr></table></div>'+
+    '<button class="btn btn-primary" style="margin-top:10px" onclick="genRecibo(\''+pid+'\')"><i class="ti ti-printer"></i> Abrir e imprimir</button>';
+}
+
+// ═══════════════════════════════════════════════════════════
+// PROFESIONALES — editable
+// ═══════════════════════════════════════════════════════════
+function pgProfesionales(c){
+  c.innerHTML='<div class="card"><div class="card-title"><i class="ti ti-user-cog"></i> Gestión de profesionales</div>'+
+    '<div style="font-size:12px;color:#aaa;margin-bottom:14px;line-height:1.6">Agrega, edita o elimina los profesionales que atienden en la clínica. Se usan en el formulario de pacientes y sesiones.</div>'+
+    '<div id="profList"></div>'+
+    '<div style="display:flex;gap:8px;margin-top:14px">'+
+      '<input id="newProfName" placeholder="Nombre del profesional Ej: Dra. Ana Torres" style="flex:1" />'+
+      '<button class="btn btn-primary" onclick="addProf()"><i class="ti ti-plus"></i> Agregar</button>'+
+    '</div></div>';
+  renderProfList();
+}
+function renderProfList(){
+  const el=document.getElementById('profList');
+  if(!el)return;
+  el.innerHTML=S.profesionales.map((p,i)=>'<div style="display:flex;align-items:center;gap:8px;padding:9px 0;border-bottom:1px solid var(--gl)">'+
+    '<input value="'+esc(p)+'" id="pi_'+i+'" style="flex:1" onblur="updateProf('+i+',this.value)" />'+
+    (S.profesionales.length>1?'<button class="btn btn-sm" style="color:var(--red);border-color:#fca5a5;flex-shrink:0" onclick="delProf('+i+')"><i class="ti ti-trash"></i></button>':'')+
+  '</div>').join('');
+}
+function addProf(){
+  const v=document.getElementById('newProfName').value.trim();
+  if(!v){alert('Ingresa el nombre del profesional');return;}
+  S.profesionales.push(v);
+  document.getElementById('newProfName').value='';
+  saveL();
+  showToast('✓ Profesional agregado','#27ae60');
+  renderProfList();
+}
+function updateProf(i,v){
+  if(v.trim())S.profesionales[i]=v.trim();
+  saveL();
+}
+function delProf(i){
+  if(!confirm('¿Eliminar este profesional?'))return;
+  S.profesionales.splice(i,1);
+  saveL();
+  showToast('Profesional eliminado','#e67e22');
+  renderProfList();
+}
+
+// ═══════════════════════════════════════════════════════════
+// ESTADÍSTICAS
+// ═══════════════════════════════════════════════════════════
+function pgStats(c){
+  const pts=Object.values(S.patients), allSs=Object.values(S.sessions).flat();
+  const sx={F:0,M:0,O:0};
+  pts.forEach(p=>{if(p.sexo==='Femenino')sx.F++;else if(p.sexo==='Masculino')sx.M++;else sx.O++;});
+  const pr={};
+  allSs.forEach(s=>{pr[s.procedimiento]=(pr[s.procedimiento]||0)+1;});
+  const top=Object.entries(pr).sort((a,b)=>b[1]-a[1]).slice(0,6);
+  const esp={};
+  pts.forEach(p=>{const e=p.especialidad||'General';esp[e]=(esp[e]||0)+1;});
+  const conRS=pts.filter(p=>getRiesgos(p).length>0).length;
+  c.innerHTML='<div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap">'+
+    '<a href="'+SHEET_URL+'" target="_blank" class="btn btn-sheets"><i class="ti ti-external-link"></i> Ver Google Sheets</a>'+
+    '<button class="btn" onclick="syncToSheets()"><i class="ti ti-refresh"></i> Sincronizar ahora</button>'+
+  '</div>'+
+  '<div class="grid4" style="margin-bottom:16px">'+
+    '<div class="metric"><div class="metric-v">'+pts.length+'</div><div class="metric-l">Pacientes</div></div>'+
+    '<div class="metric"><div class="metric-v">'+allSs.length+'</div><div class="metric-l">Sesiones</div></div>'+
+    '<div class="metric"><div class="metric-v" style="color:var(--red)">'+conRS+'</div><div class="metric-l">Con riesgo sist.</div></div>'+
+    '<div class="metric"><div class="metric-v" style="color:var(--warn)">'+getAlerts().filter(a=>a.type==='vencido').length+'</div><div class="metric-l">Controles vencidos</div></div>'+
+  '</div>'+
+  '<div class="grid2">'+
+    '<div class="card"><div class="card-title">Procedimientos frecuentes</div>'+
+      (top.length===0?'<div style="font-size:12px;color:#ccc">Sin datos</div>':top.map(([p,n])=>'<div style="margin-bottom:8px"><div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:3px;color:#aaa"><span>'+p+'</span><span>'+n+'</span></div><div class="prog-bar"><div class="prog-fill" style="width:'+Math.round(n/(top[0][1]||1)*100)+'%"></div></div></div>').join(''))+
+    '</div>'+
+    '<div class="card"><div class="card-title">Por especialidad</div>'+
+      (Object.entries(esp).length===0?'<div style="font-size:12px;color:#ccc">Sin datos</div>':Object.entries(esp).map(([e,n])=>'<div style="margin-bottom:8px"><div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:3px;color:#aaa"><span>'+e+'</span><span>'+n+'</span></div><div class="prog-bar"><div class="prog-fill" style="width:'+(pts.length?Math.round(n/pts.length*100):0)+'%"></div></div></div>').join(''))+
+    '</div>'+
+  '</div>'+
+  '<div class="card"><div class="card-title">Por sexo</div><div class="grid3">'+
+    '<div class="metric"><div class="metric-v">'+sx.F+'</div><div class="metric-l">Femenino</div></div>'+
+    '<div class="metric"><div class="metric-v">'+sx.M+'</div><div class="metric-l">Masculino</div></div>'+
+    '<div class="metric"><div class="metric-v">'+sx.O+'</div><div class="metric-l">No especificado</div></div>'+
+  '</div></div>';
+}
+
+// ═══════════════════════════════════════════════════════════
+// EXPORTAR
+// ═══════════════════════════════════════════════════════════
+function pgExportar(c){
+  c.innerHTML='<div class="card"><div class="card-title"><i class="ti ti-download"></i> Exportar datos</div>'+
+    '<div style="background:var(--tq-ll);border:1px solid var(--tq-l);border-radius:10px;padding:11px 16px;margin-bottom:14px;display:flex;align-items:center;gap:12px">'+
+      '<i class="ti ti-brand-google-drive" style="color:#0f9d58;font-size:18px"></i>'+
+      '<div style="flex:1;font-size:11px;color:#555">Sincronización con Google Sheets</div>'+
+      '<a href="'+SHEET_URL+'" target="_blank" class="btn btn-sheets btn-sm">Abrir Sheets</a>'+
+    '</div>'+
+    '<div class="grid2" style="margin-bottom:14px">'+
+      '<div><div style="font-size:9px;color:#bbb;text-transform:uppercase;margin-bottom:10px">Tipo</div>'+
+        '<label style="display:flex;align-items:center;gap:8px;font-size:12px;margin-bottom:8px"><input type="radio" name="eT" value="ind" onchange="document.getElementById(\'indRow\').style.display=\'block\'"> Individual</label>'+
+        '<label style="display:flex;align-items:center;gap:8px;font-size:12px"><input type="radio" name="eT" value="col" checked onchange="document.getElementById(\'indRow\').style.display=\'none\'"> Colectivo</label>'+
+      '</div>'+
+      '<div><div style="font-size:9px;color:#bbb;text-transform:uppercase;margin-bottom:10px">Formato</div>'+
+        '<label style="display:flex;align-items:center;gap:8px;font-size:12px;margin-bottom:7px"><input type="radio" name="eF" value="json" checked> JSON</label>'+
+        '<label style="display:flex;align-items:center;gap:8px;font-size:12px;margin-bottom:7px"><input type="radio" name="eF" value="csv"> CSV (Excel)</label>'+
+        '<label style="display:flex;align-items:center;gap:8px;font-size:12px"><input type="radio" name="eF" value="both"> Ambos</label>'+
+      '</div>'+
+    '</div>'+
+    '<div id="indRow" style="display:none" class="form-row"><label>Paciente</label><select id="ePac">'+
+      Object.values(S.patients).map(p=>'<option value="'+p.id+'">'+p.nombre+'</option>').join('')+
+    '</select></div>'+
+    '<div style="display:flex;gap:8px;flex-wrap:wrap">'+
+      '<button class="btn btn-primary" onclick="doExport()"><i class="ti ti-download"></i> Exportar local</button>'+
+      '<button class="btn btn-sheets" onclick="syncToSheets()"><i class="ti ti-refresh"></i> Sincronizar Sheets</button>'+
+    '</div></div>';
+}
+function doExport(){
+  const type=(document.querySelector('input[name="eT"]:checked')||{}).value||'col';
+  const fmt=(document.querySelector('input[name="eF"]:checked')||{}).value||'json';
+  const ds=today();
+  let data;
+  if(type==='ind'){
+    const pid=document.getElementById('ePac')&&document.getElementById('ePac').value;
+    const p=S.patients[pid];if(!p){alert('Selecciona un paciente');return;}
+    data={tipo:'individual',paciente:p,sesiones:S.sessions[pid]||[],pagos:S.payments[pid]||[],controles:S.controls[pid]||[],examenes:S.examenes[pid]||[],odontograma:S.toothData[pid]||{},exportado:new Date().toISOString()};
+  }else{
+    const pts=Object.values(S.patients);
+    data={tipo:'colectivo',exportado:new Date().toISOString(),total:pts.length,pacientes:pts.map(p=>Object.assign({},p,{sesiones:S.sessions[p.id]||[],pagos:S.payments[p.id]||[],controles:S.controls[p.id]||[]}))};
+  }
+  if(fmt==='json'||fmt==='both'){const b=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='dentalys_'+type+'_'+ds+'.json';a.click();}
+  if(fmt==='csv'||fmt==='both'){
+    const pts=type==='ind'?[S.patients[document.getElementById('ePac')&&document.getElementById('ePac').value]]:Object.values(S.patients);
+    const rows=[['ID','Nombre','DNI','Edad','Sexo','Especialidad','Profesional','Diagnóstico','Sesiones','Pagado','Saldo','Riesgo Sistémico']];
+    pts.forEach(p=>{if(!p)return;const pg=(S.payments[p.id]||[]).reduce((s,pg)=>s+(parseFloat(pg.monto)||0),0);const rs=getRiesgos(p).map(r=>r.l).join(' | ');rows.push([p.id,p.nombre,p.dni||'',age(p.fechaNac),p.sexo||'',p.especialidad||'',p.profesional||'',(p.diagnostico||'').replace(/,/g,';'),(S.sessions[p.id]||[]).length,pg.toFixed(2),((parseFloat(p.presupuesto)||0)-pg).toFixed(2),rs]);});
+    const csv=rows.map(r=>r.join(',')).join('\n');
+    const b=new Blob([csv],{type:'text/csv;charset=utf-8;'});const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='dentalys_'+type+'_'+ds+'.csv';a.click();
+  }
+}
+</script>
+</body>
+</html>
