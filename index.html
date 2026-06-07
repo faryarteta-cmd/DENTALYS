@@ -1521,18 +1521,17 @@ function pgAgenda(c){
 
 function citaRow(ct){
   const p=S.patients[ct.pacienteId];
+  const btns=ct.estado==='pendiente'?
+    '<button class="btn btn-primary btn-sm" onclick="marcarCita(''+ct.id+'','atendido')">Atendido</button>'+
+    '<button class="btn btn-sm" style="color:var(--red);border-color:#fca5a5" onclick="marcarCita(''+ct.id+'','cancelado')">Cancelar</button>'
+    :'<span class="badge '+(ct.estado==='atendido'?'bg':'bd')+'">'+ct.estado+'</span>';
   return '<div class="ctrl-item">'+
     '<div>'+
       '<div style="font-weight:500;font-size:13px">'+(p?p.nombre:ct.pacienteId)+'</div>'+
-      '<div style="font-size:10px;color:#aaa">'+fd(ct.fecha)+' '+ct.hora+' · '+ct.procedimiento+' · '+ct.operador+'</div>'+
+      '<div style="font-size:10px;color:#aaa">'+fd(ct.fecha)+' '+ct.hora+' &middot; '+ct.procedimiento+' &middot; '+ct.operador+'</div>'+
       (ct.notas?'<div style="font-size:10px;color:#bbb">'+ct.notas+'</div>':'')+
     '</div>'+
-    '<div style="display:flex;gap:5px;align-items:center">'+
-      (ct.estado==='pendiente'?
-        '<button class="btn btn-primary btn-sm" onclick="marcarCita(''+ct.id+'','atendido')">Atendido</button>'+
-        '<button class="btn btn-sm" style="color:var(--red);border-color:#fca5a5" onclick="marcarCita(''+ct.id+'','cancelado')">Cancelar</button>'
-      :'<span class="badge '+(ct.estado==='atendido'?'bg':'bd')+'">'+ct.estado+'</span>')+
-    '</div>'+
+    '<div style="display:flex;gap:5px;align-items:center">'+btns+'</div>'+
   '</div>';
 }
 
