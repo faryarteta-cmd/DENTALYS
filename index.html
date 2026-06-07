@@ -146,13 +146,18 @@ textarea{resize:vertical;min-height:58px}
       <div class="nav-item" onclick="nav('economia')"><i class="ti ti-lock"></i> Economía (admin)</div>
       <div class="nav-sec">Clínica</div>
       <div class="nav-item" onclick="nav('agenda')"><i class="ti ti-calendar"></i> Agenda / Citas</div>
+      <div class="nav-item" onclick="nav('evoluciones')"><i class="ti ti-activity"></i> Evolución tratamientos</div>
       <div class="nav-item" onclick="nav('kardex')"><i class="ti ti-box"></i> Kárdex materiales</div>
       <div class="nav-item" onclick="nav('equipos')"><i class="ti ti-tool"></i> Equipos</div>
       <div class="nav-item" onclick="nav('consentimientos')"><i class="ti ti-file-check"></i> Consentimientos</div>
+      <div class="nav-sec">Administración</div>
+      <div class="nav-item" onclick="nav('proveedores')"><i class="ti ti-truck"></i> Proveedores</div>
+      <div class="nav-item" onclick="nav('personal')"><i class="ti ti-id-badge"></i> Personal</div>
       <div class="nav-sec">Configuración</div>
       <div class="nav-item" onclick="nav('profesionales')"><i class="ti ti-user-cog"></i> Profesionales</div>
       <div class="nav-sec">Reportes</div>
       <div class="nav-item" onclick="nav('estadistica')"><i class="ti ti-chart-bar"></i> Estadísticas</div>
+      <div class="nav-item" onclick="nav('estrategia')"><i class="ti ti-target"></i> Estrategia</div>
       <div class="nav-item" onclick="nav('exportar')"><i class="ti ti-download"></i> Exportar</div>
     </div>
     <div style="padding:12px 18px;border-top:1px solid var(--gl)">
@@ -208,7 +213,7 @@ const SUNAT_URL = 'https://ww1.sunat.gob.pe/ol-ti-itrheemision/emisionrhe.do';
 let S = {
   patients:{}, sessions:{}, payments:{}, controls:{}, toothData:{}, examenes:{},
   profesionales:['Dr./Dra. - (sin asignar)'],
-  egresos:[], citas:[], kardex:[], equipos:[], consentimientos:[],
+  egresos:[], citas:[], kardex:[], equipos:[], consentimientos:[], evoluciones:[], proveedores:[], personal:[],
   deudas:[
     {id:'D1',nombre:'Alquiler',monto:1500,categoria:'Alquiler',dia:1,pendientes:2},
     {id:'D2',nombre:'Personal',monto:1000,categoria:'Personal',dia:1,pendientes:0}
@@ -294,6 +299,83 @@ async function syncToSheets() {
   }
 }
 
+
+// ═══════════════════════════════════════════════════════════
+// RESTAURAR DESDE SHEETS
+// ═══════════════════════════════════════════════════════════
+async function restaurarDesdeSheets() {
+  try {
+    showToast('Recuperando datos desde Sheets...', '#00AFC1', 5000);
+    const res = await gsCall('getAll', {});
+    if (res && res.ok && res.result) {
+      const data = res.result;
+      // Reconstruir pacientes
+      if (data.pacientes && data.pacientes.length > 0) {
+        data.pacientes.forEach(function(row) {
+          var id = row['ID'];
+          if (!id) return;
+          S.patients[id] = {
+            id: id, nombre: row['Nombre']||'', dni: row['DNI']||'',
+            fechaNac: row['Fecha_Nacimiento']||'', sexo: row['Sexo']||'',
+            tel: row['Telefono']||'', especialidad: row['Especialidad']||'',
+            profesional: row['Profesional']||'', motivo: row['Motivo_Consulta']||'',
+            antecedentes: row['Antecedentes_Medicos']||'', medicamentos: row['Medicamentos']||'',
+            alergias: row['Alergias']||'', habitos: row['Habitos']||'',
+            pa: row['Presion_Arterial']||'', fc: row['Frec_Cardiaca']||'',
+            peso: row['Peso_kg']||'', talla: row['Talla_cm']||'',
+            extraoral: row['Examen_Extraoral']||'', intraoral: row['Examen_Intraoral']||'',
+            diagnostico: row['Diagnostico']||'', plan: row['Plan_Tratamiento']||'',
+            presupuesto: row['Presupuesto_Total']||'', observaciones: row['Observaciones']||'',
+            fechaRegistro: row['Fecha_Registro']||''
+          };
+          if(!S.sessions[id])S.sessions[id]=[];
+          if(!S.payments[id])S.payments[id]=[];
+          if(!S.controls[id])S.controls[id]=[];
+          if(!S.toothData[id])S.toothData[id]={};
+          if(!S.examenes[id])S.examenes[id]=[];
+        });
+      }
+      // Sesiones
+      if (data.sesiones && data.sesiones.length > 0) {
+        data.sesiones.forEach(function(row) {
+          var pid = row['ID_Paciente']; if(!pid)return;
+          if(!S.sessions[pid])S.sessions[pid]=[];
+          S.sessions[pid].push({id:row['ID_Sesion'],fecha:row['Fecha'],procedimiento:row['Procedimiento'],piezas:row['Piezas']||'',operador:row['Operador']||'',observaciones:row['Observaciones']||'',monto:row['Monto_S/']||'0',metodo:row['Metodo_Pago']||''});
+        });
+      }
+      // Pagos
+      if (data.pagos && data.pagos.length > 0) {
+        data.pagos.forEach(function(row) {
+          var pid = row['ID_Paciente']; if(!pid)return;
+          if(!S.payments[pid])S.payments[pid]=[];
+          S.payments[pid].push({id:row['ID_Pago'],fecha:row['Fecha'],procedimiento:row['Procedimiento']||'',monto:row['Monto_S/']||'0',metodo:row['Metodo_Pago']||''});
+        });
+      }
+      // Controles
+      if (data.controles && data.controles.length > 0) {
+        data.controles.forEach(function(row) {
+          var pid = row['ID_Paciente']; if(!pid)return;
+          if(!S.controls[pid])S.controls[pid]=[];
+          S.controls[pid].push({id:row['ID_Control'],tipo:row['Tipo_Control']||'',fecha:row['Fecha_Programada']||'',estado:row['Estado']||'pendiente',generadoEn:row['Generado_Desde']||''});
+        });
+      }
+      saveL();
+      var total = Object.keys(S.patients).length;
+      if(total > 0) {
+        setSS('ok', 'Datos recuperados: '+total+' pacientes');
+        showToast('Datos restaurados desde Sheets: '+total+' pacientes', '#27ae60');
+      } else {
+        setSS('ok', 'Sin datos previos en Sheets');
+      }
+    } else {
+      setSS('ok', 'Listo');
+    }
+  } catch(e) {
+    setSS('err', 'No se pudo recuperar de Sheets');
+  }
+  nav('dashboard');
+}
+
 async function gsSave(action, payload) {
   try {
     const res = await gsCall(action, payload);
@@ -329,9 +411,16 @@ function checkPwd() {
   if (document.getElementById('pwdInput').value === PASS) {
     document.getElementById('lockScreen').style.display = 'none';
     document.getElementById('mainApp').style.display = 'flex';
-    loadL(); nav('dashboard');
+    loadL();
     document.getElementById('sbDate').textContent =
       new Date().toLocaleDateString('es-PE',{weekday:'long',day:'numeric',month:'long'});
+    // Si no hay datos locales, intentar recuperar desde Sheets
+    if(Object.keys(S.patients).length === 0) {
+      setSS('sync', 'Buscando datos en Sheets...');
+      restaurarDesdeSheets();
+    } else {
+      nav('dashboard');
+    }
   } else {
     document.getElementById('pwdError').style.display = 'block';
   }
@@ -487,7 +576,7 @@ function selPac(pid){
 // ═══════════════════════════════════════════════════════════
 // NAVEGACIÓN
 // ═══════════════════════════════════════════════════════════
-const PAGE_TITLES={dashboard:'Inicio',alertas:'Controles programados',pacientes:'Lista de pacientes',nuevo:'Nuevo paciente',caja:'Caja del día',economia:'Economía',egresos:'Egresos',deudas:'Deudas fijas',agenda:'Agenda',kardex:'Kárdex',equipos:'Equipos',consentimientos:'Consentimientos',recibo:'Recibos',profesionales:'Profesionales',estadistica:'Estadísticas',reporte:'Reporte mensual',exportar:'Exportar',ficha:'Ficha del paciente'};
+const PAGE_TITLES={dashboard:'Inicio',alertas:'Controles programados',pacientes:'Lista de pacientes',nuevo:'Nuevo paciente',caja:'Caja del día',economia:'Economía',egresos:'Egresos',deudas:'Deudas fijas',agenda:'Agenda',kardex:'Kárdex',equipos:'Equipos',consentimientos:'Consentimientos',recibo:'Recibos',profesionales:'Profesionales',estadistica:'Estadísticas',reporte:'Reporte mensual',evoluciones:'Evolución de tratamientos',proveedores:'Proveedores',personal:'Personal',estrategia:'Estrategia',exportar:'Exportar',ficha:'Ficha del paciente'};
 const NAV_IDX={dashboard:0,alertas:1,pacientes:3,nuevo:4,caja:6,recibo:7,profesionales:9,estadistica:11,exportar:12};
 function nav(page){
   document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
@@ -508,6 +597,10 @@ function nav(page){
   else if(page==='equipos')pgEquipos(c);
   else if(page==='consentimientos')pgConsentimientos(c);
   else if(page==='reporte')pgReporte(c);
+  else if(page==='evoluciones')pgEvoluciones(c);
+  else if(page==='proveedores')pgProveedores(c);
+  else if(page==='personal')pgPersonal(c);
+  else if(page==='estrategia')pgEstrategia(c);
   else if(page==='recibo')pgRecibo(c);
   else if(page==='profesionales')pgProfesionales(c);
   else if(page==='estadistica')pgStats(c);
@@ -1868,6 +1961,288 @@ function imprimirReporte(mes){
     '<br><button onclick="window.print()" style="padding:10px 20px;background:#00AFC1;color:#fff;border:none;border-radius:8px;cursor:pointer">Imprimir</button>'+
     '</body></html>';
   var w=window.open('','_blank');w.document.write(html);w.document.close();
+}
+
+
+// ═══════════════════════════════════════════════════════════
+// EVOLUCIÓN DE TRATAMIENTOS
+// ═══════════════════════════════════════════════════════════
+function pgEvoluciones(c) {
+  if(!S.evoluciones)S.evoluciones=[];
+  var pts=Object.values(S.patients);
+  var activos=S.evoluciones.filter(function(e){return e.estado==='en_curso';});
+  var abandonados=S.evoluciones.filter(function(e){return e.estado==='abandonado';});
+  var completados=S.evoluciones.filter(function(e){return e.estado==='completado';});
+
+  var rows=S.evoluciones.map(function(ev,i){
+    var p=S.patients[ev.pacienteId];
+    var pct=ev.sesionesTotal>0?Math.min(100,Math.round((ev.sesionesHechas/ev.sesionesTotal)*100)):0;
+    var color=ev.estado==='completado'?'var(--ok)':ev.estado==='abandonado'?'var(--red)':'var(--tq)';
+    return '<div class="card" style="margin-bottom:10px">'+
+      '<div style="display:flex;align-items:flex-start;gap:12px">'+
+        '<div style="flex:1">'+
+          '<div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">'+
+            '<strong style="font-size:13px">'+(p?p.nombre:'--')+'</strong>'+
+            '<span class="badge" style="background:'+(ev.estado==='completado'?'#edfaf3':ev.estado==='abandonado'?'#fef0f0':'var(--tq-l)')+';color:'+color+'">'+ev.estado.replace('_',' ')+'</span>'+
+          '</div>'+
+          '<div style="font-size:11px;color:#aaa;margin-bottom:8px">'+ev.tratamiento+' · Inicio: '+fd(ev.fechaInicio)+'</div>'+
+          '<div style="font-size:10px;color:#888;margin-bottom:4px">Sesiones: '+ev.sesionesHechas+'/'+ev.sesionesTotal+' ('+pct+'%)</div>'+
+          '<div class="prog-bar"><div style="height:100%;border-radius:10px;background:'+color+';width:'+pct+'%"></div></div>'+
+          (ev.ultimaNota?'<div style="font-size:11px;color:#aaa;margin-top:6px;font-style:italic">Última nota: '+ev.ultimaNota+'</div>':'')+
+        '</div>'+
+        '<div style="display:flex;flex-direction:column;gap:4px;flex-shrink:0">'+
+          (ev.estado==='en_curso'?
+            '<button class="btn btn-primary btn-sm" onclick="addSesionEvol('+i+')">+ Sesión</button>'+
+            '<button class="btn btn-sm" style="color:var(--ok);border-color:var(--ok)" onclick="completarEvol('+i+')">Completar</button>'+
+            '<button class="btn btn-sm" style="color:var(--red);border-color:#fca5a5" onclick="abandonarEvol('+i+')">Abandonado</button>'
+          :'')+
+        '</div>'+
+      '</div>'+
+    '</div>';
+  }).join('');
+
+  c.innerHTML=
+    '<div class="grid3" style="margin-bottom:14px">'+
+      '<div class="metric"><div class="metric-v" style="color:var(--tq)">'+activos.length+'</div><div class="metric-l">En curso</div></div>'+
+      '<div class="metric"><div class="metric-v" style="color:var(--ok)">'+completados.length+'</div><div class="metric-l">Completados</div></div>'+
+      '<div class="metric"><div class="metric-v" style="color:var(--red)">'+abandonados.length+'</div><div class="metric-l">Abandonados</div></div>'+
+    '</div>'+
+    '<div class="card"><div class="card-title"><i class="ti ti-plus"></i> Nuevo tratamiento</div>'+
+      '<div class="grid2">'+
+        '<div class="form-row"><label>Paciente</label><select id="ev_p"><option value="">-- seleccionar --</option>'+pts.map(function(p){return '<option value="'+p.id+'">'+p.nombre+'</option>';}).join('')+'</select></div>'+
+        '<div class="form-row"><label>Tratamiento</label><input id="ev_t" placeholder="Ej: Ortodoncia, Implante..." /></div>'+
+      '</div>'+
+      '<div class="grid3">'+
+        '<div class="form-row"><label>Fecha inicio</label><input type="date" id="ev_f" value="'+today()+'" /></div>'+
+        '<div class="form-row"><label>Total sesiones estimadas</label><input type="number" id="ev_s" value="10" min="1" /></div>'+
+        '<div class="form-row"><label>Nota inicial</label><input id="ev_n" placeholder="Observación inicial..." /></div>'+
+      '</div>'+
+      '<button class="btn btn-primary" onclick="addEvolucion()"><i class="ti ti-device-floppy"></i> Iniciar tratamiento</button>'+
+    '</div>'+
+    '<div class="card"><div class="card-title"><i class="ti ti-activity"></i> Tratamientos ('+S.evoluciones.length+')</div>'+
+      (S.evoluciones.length===0?'<div style="font-size:12px;color:#ccc">Sin tratamientos registrados</div>':rows)+
+    '</div>';
+}
+
+function addEvolucion(){
+  var pid=document.getElementById('ev_p').value;
+  var t=document.getElementById('ev_t').value.trim();
+  if(!pid||!t){alert('Paciente y tratamiento requeridos');return;}
+  if(!S.evoluciones)S.evoluciones=[];
+  S.evoluciones.push({id:'EV'+Date.now(),pacienteId:pid,tratamiento:t,fechaInicio:document.getElementById('ev_f').value,sesionesTotal:parseInt(document.getElementById('ev_s').value)||10,sesionesHechas:0,estado:'en_curso',ultimaNota:document.getElementById('ev_n').value,notas:[]});
+  saveL();showToast('Tratamiento iniciado','#27ae60');
+  pgEvoluciones(document.getElementById('pageContent'));
+}
+
+function addSesionEvol(i){
+  var nota=prompt('Nota de esta sesión:');
+  if(nota===null)return;
+  S.evoluciones[i].sesionesHechas=Math.min(S.evoluciones[i].sesionesHechas+1,S.evoluciones[i].sesionesTotal);
+  S.evoluciones[i].ultimaNota=nota||'Sin nota';
+  if(!S.evoluciones[i].notas)S.evoluciones[i].notas=[];
+  S.evoluciones[i].notas.push({fecha:today(),nota:nota||'Sin nota'});
+  if(S.evoluciones[i].sesionesHechas>=S.evoluciones[i].sesionesTotal)S.evoluciones[i].estado='completado';
+  saveL();showToast('Sesión registrada','#27ae60');
+  pgEvoluciones(document.getElementById('pageContent'));
+}
+
+function completarEvol(i){S.evoluciones[i].estado='completado';saveL();showToast('Tratamiento completado','#27ae60');pgEvoluciones(document.getElementById('pageContent'));}
+function abandonarEvol(i){if(!confirm('Marcar como abandonado?'))return;S.evoluciones[i].estado='abandonado';saveL();showToast('Marcado como abandonado','#e67e22');pgEvoluciones(document.getElementById('pageContent'));}
+
+// ═══════════════════════════════════════════════════════════
+// PROVEEDORES
+// ═══════════════════════════════════════════════════════════
+function pgProveedores(c){
+  if(!S.proveedores)S.proveedores=[];
+  var rows=S.proveedores.map(function(pv,i){
+    return '<div class="ctrl-item">'+
+      '<div>'+
+        '<div style="font-weight:500;font-size:13px">'+pv.nombre+'</div>'+
+        '<div style="font-size:10px;color:#aaa">'+pv.categoria+' · '+pv.contacto+(pv.tel?' · '+pv.tel:'')+'</div>'+
+        (pv.productos?'<div style="font-size:10px;color:#bbb;margin-top:2px">Productos: '+pv.productos+'</div>':'')+
+        (pv.notas?'<div style="font-size:10px;color:#bbb">Notas: '+pv.notas+'</div>':'')+
+      '</div>'+
+      '<button class="btn btn-sm" style="color:var(--red)" onclick="delProveedor('+i+')"><i class="ti ti-trash"></i></button>'+
+    '</div>';
+  }).join('');
+
+  c.innerHTML=
+    '<div class="card"><div class="card-title"><i class="ti ti-plus"></i> Agregar proveedor</div>'+
+      '<div class="grid3">'+
+        '<div class="form-row"><label>Nombre / Empresa</label><input id="pv_n" placeholder="Ej: DentSupply SAC" /></div>'+
+        '<div class="form-row"><label>Categoría</label><select id="pv_c"><option>Materiales dentales</option><option>Equipos</option><option>Desechables</option><option>Medicamentos</option><option>Mantenimiento</option><option>Otros</option></select></div>'+
+        '<div class="form-row"><label>Contacto</label><input id="pv_ct" placeholder="Nombre del vendedor" /></div>'+
+      '</div>'+
+      '<div class="grid3">'+
+        '<div class="form-row"><label>Teléfono / WhatsApp</label><input id="pv_t" placeholder="9XXXXXXXX" /></div>'+
+        '<div class="form-row"><label>Productos que vende</label><input id="pv_p" placeholder="Ej: composite, anestesia..." /></div>'+
+        '<div class="form-row"><label>Notas</label><input id="pv_o" placeholder="Condiciones, descuentos..." /></div>'+
+      '</div>'+
+      '<button class="btn btn-primary" onclick="addProveedor()"><i class="ti ti-device-floppy"></i> Guardar proveedor</button>'+
+    '</div>'+
+    '<div class="card"><div class="card-title"><i class="ti ti-truck"></i> Proveedores ('+S.proveedores.length+')</div>'+
+      (S.proveedores.length===0?'<div style="font-size:12px;color:#ccc">Sin proveedores registrados</div>':rows)+
+    '</div>';
+}
+
+function addProveedor(){
+  var n=document.getElementById('pv_n').value.trim();
+  if(!n){alert('Nombre requerido');return;}
+  if(!S.proveedores)S.proveedores=[];
+  S.proveedores.push({id:'PV'+Date.now(),nombre:n,categoria:document.getElementById('pv_c').value,contacto:document.getElementById('pv_ct').value,tel:document.getElementById('pv_t').value,productos:document.getElementById('pv_p').value,notas:document.getElementById('pv_o').value});
+  saveL();showToast('Proveedor agregado','#27ae60');
+  pgProveedores(document.getElementById('pageContent'));
+}
+function delProveedor(i){if(!confirm('Eliminar proveedor?'))return;S.proveedores.splice(i,1);saveL();pgProveedores(document.getElementById('pageContent'));}
+
+// ═══════════════════════════════════════════════════════════
+// PERSONAL
+// ═══════════════════════════════════════════════════════════
+function pgPersonal(c){
+  if(!S.personal)S.personal=[];
+  var rows=S.personal.map(function(p,i){
+    var asis=p.asistencias||[];
+    var esteMes=today().slice(0,7);
+    var diasMes=asis.filter(function(a){return a.fecha&&a.fecha.startsWith(esteMes)&&a.tipo==='asistencia';}).length;
+    var tardanzas=asis.filter(function(a){return a.fecha&&a.fecha.startsWith(esteMes)&&a.tipo==='tardanza';}).length;
+    return '<div class="card" style="margin-bottom:10px">'+
+      '<div style="display:flex;align-items:flex-start;gap:12px">'+
+        '<div class="avatar" style="width:40px;height:40px;font-size:13px;flex-shrink:0">'+ini(p.nombre)+'</div>'+
+        '<div style="flex:1">'+
+          '<div style="font-weight:500;font-size:13px">'+p.nombre+'</div>'+
+          '<div style="font-size:10px;color:#aaa">'+p.cargo+' · S/ '+parseFloat(p.sueldo||0).toFixed(2)+'/mes · '+p.horario+'</div>'+
+          '<div style="font-size:10px;color:#888;margin-top:4px">Este mes: <strong>'+diasMes+' días</strong> asistidos · <span style="color:var(--warn)">'+tardanzas+' tardanzas</span></div>'+
+        '</div>'+
+        '<div style="display:flex;gap:4px;flex-shrink:0">'+
+          '<button class="btn btn-primary btn-sm" onclick="registrarAsist('+i+',\'asistencia\')">Asistió</button>'+
+          '<button class="btn btn-sm" style="color:var(--warn);border-color:var(--warn)" onclick="registrarAsist('+i+',\'tardanza\')">Tardanza</button>'+
+          '<button class="btn btn-sm" style="color:var(--red);border-color:#fca5a5" onclick="registrarAsist('+i+',\'falta\')">Falta</button>'+
+          '<button class="btn btn-sm" onclick="delPersonal('+i+')"><i class="ti ti-trash"></i></button>'+
+        '</div>'+
+      '</div>'+
+    '</div>';
+  }).join('');
+
+  c.innerHTML=
+    '<div class="card"><div class="card-title"><i class="ti ti-plus"></i> Agregar personal</div>'+
+      '<div class="grid3">'+
+        '<div class="form-row"><label>Nombre completo</label><input id="pe_n" placeholder="Nombres y apellidos" /></div>'+
+        '<div class="form-row"><label>Cargo</label><input id="pe_c" placeholder="Ej: Asistente dental, Recepcionista" /></div>'+
+        '<div class="form-row"><label>Sueldo mensual (S/)</label><input type="number" id="pe_s" placeholder="0.00" /></div>'+
+      '</div>'+
+      '<div class="grid2">'+
+        '<div class="form-row"><label>Horario</label><input id="pe_h" placeholder="Ej: Lun-Vie 9am-6pm" /></div>'+
+        '<div class="form-row"><label>Teléfono</label><input id="pe_t" placeholder="9XXXXXXXX" /></div>'+
+      '</div>'+
+      '<button class="btn btn-primary" onclick="addPersonal()"><i class="ti ti-device-floppy"></i> Guardar</button>'+
+    '</div>'+
+    '<div class="card"><div class="card-title"><i class="ti ti-id-badge"></i> Personal ('+S.personal.length+')</div>'+
+      (S.personal.length===0?'<div style="font-size:12px;color:#ccc">Sin personal registrado</div>':rows)+
+    '</div>';
+}
+
+function addPersonal(){
+  var n=document.getElementById('pe_n').value.trim();
+  if(!n){alert('Nombre requerido');return;}
+  if(!S.personal)S.personal=[];
+  S.personal.push({id:'PE'+Date.now(),nombre:n,cargo:document.getElementById('pe_c').value,sueldo:parseFloat(document.getElementById('pe_s').value)||0,horario:document.getElementById('pe_h').value,tel:document.getElementById('pe_t').value,asistencias:[]});
+  saveL();showToast('Personal agregado','#27ae60');
+  pgPersonal(document.getElementById('pageContent'));
+}
+
+function registrarAsist(i,tipo){
+  if(!S.personal[i].asistencias)S.personal[i].asistencias=[];
+  S.personal[i].asistencias.push({fecha:today(),tipo:tipo});
+  saveL();
+  var msg=tipo==='asistencia'?'Asistencia registrada':tipo==='tardanza'?'Tardanza registrada':'Falta registrada';
+  var col=tipo==='asistencia'?'#27ae60':tipo==='tardanza'?'#e67e22':'#c0392b';
+  showToast(msg,col);
+  pgPersonal(document.getElementById('pageContent'));
+}
+function delPersonal(i){if(!confirm('Eliminar personal?'))return;S.personal.splice(i,1);saveL();pgPersonal(document.getElementById('pageContent'));}
+
+// ═══════════════════════════════════════════════════════════
+// ESTRATEGIA
+// ═══════════════════════════════════════════════════════════
+function pgEstrategia(c){
+  var mes=today().slice(0,7);
+  var ingrMes=Object.values(S.payments).flat().filter(function(p){return p.fecha&&p.fecha.startsWith(mes);}).reduce(function(s,p){return s+(parseFloat(p.monto)||0);},0);
+  var meta=parseFloat(localStorage.getItem('dnt_meta_mensual')||'3000');
+  var pct=meta>0?Math.min(100,Math.round(ingrMes/meta*100)):0;
+  var semaforo=pct>=100?'#27ae60':pct>=70?'#e67e22':'#c0392b';
+
+  // Pacientes perdidos (no han tenido sesión en 3+ meses)
+  var hace90=new Date();hace90.setDate(hace90.getDate()-90);
+  var perdidos=Object.entries(S.sessions).filter(function(entry){
+    var ss=entry[1];
+    if(!ss||ss.length===0)return false;
+    var ultima=ss.reduce(function(a,b){return a.fecha>b.fecha?a:b;});
+    return new Date(ultima.fecha)<hace90;
+  }).map(function(entry){
+    var p=S.patients[entry[0]];
+    var ss=entry[1];
+    var ultima=ss.reduce(function(a,b){return a.fecha>b.fecha?a:b;});
+    return {nombre:p?p.nombre:'--',tel:p?p.tel:'',ultimaFecha:ultima.fecha};
+  });
+
+  // Procedimientos más rentables
+  var byProc={};
+  Object.values(S.payments).flat().forEach(function(p){
+    byProc[p.procedimiento||'Pago']=(byProc[p.procedimiento||'Pago']||0)+(parseFloat(p.monto)||0);
+  });
+  var topProc=Object.entries(byProc).sort(function(a,b){return b[1]-a[1];}).slice(0,5);
+
+  // Tasa de abandono
+  var totalEvol=(S.evoluciones||[]).length;
+  var abandonados=(S.evoluciones||[]).filter(function(e){return e.estado==='abandonado';}).length;
+  var tasaAbandono=totalEvol>0?Math.round(abandonados/totalEvol*100):0;
+
+  c.innerHTML=
+    '<div class="card" style="border-color:'+semaforo+'">'+
+      '<div class="card-title" style="color:'+semaforo+'"><i class="ti ti-target"></i> Meta mensual — '+mes+'</div>'+
+      '<div style="display:flex;align-items:center;gap:16px;margin-bottom:12px">'+
+        '<div style="font-size:32px;font-weight:300;color:'+semaforo+'">'+pct+'%</div>'+
+        '<div>'+
+          '<div style="font-size:12px;color:#888">S/ '+ingrMes.toFixed(2)+' de S/ '+meta.toFixed(2)+' meta</div>'+
+          '<div style="font-size:11px;color:#aaa;margin-top:2px">'+(pct>=100?'Meta alcanzada!':pct>=70?'Vas bien, sigue adelante':'Necesitas acelerar')+'</div>'+
+        '</div>'+
+      '</div>'+
+      '<div class="prog-bar" style="height:8px"><div style="height:100%;border-radius:10px;background:'+semaforo+';width:'+pct+'%"></div></div>'+
+      '<div style="margin-top:12px;display:flex;gap:8px;align-items:center">'+
+        '<label style="font-size:10px;color:#bbb;text-transform:uppercase">Cambiar meta:</label>'+
+        '<input type="number" id="metaInput" value="'+meta+'" style="width:120px;font-size:12px;padding:5px 8px" />'+
+        '<button class="btn btn-primary btn-sm" onclick="guardarMeta()">Guardar</button>'+
+      '</div>'+
+    '</div>'+
+    '<div class="grid2" style="margin-bottom:14px">'+
+      '<div class="card"><div class="card-title"><i class="ti ti-chart-bar"></i> Procedimientos más rentables</div>'+
+        (topProc.length===0?'<div style="font-size:12px;color:#ccc">Sin datos</div>':
+          topProc.map(function(e){return '<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--gl);font-size:12px"><span>'+e[0]+'</span><strong style="color:var(--ok)">S/ '+e[1].toFixed(2)+'</strong></div>';}).join(''))+
+      '</div>'+
+      '<div class="card"><div class="card-title"><i class="ti ti-activity"></i> Indicadores clínicos</div>'+
+        '<div style="font-size:12px;margin-bottom:8px">Tasa de abandono: <strong style="color:'+(tasaAbandono>20?'var(--red)':'var(--ok)')+'">'+tasaAbandono+'%</strong></div>'+
+        '<div style="font-size:12px;margin-bottom:8px">Tratamientos activos: <strong style="color:var(--tq)">'+(S.evoluciones||[]).filter(function(e){return e.estado==='en_curso';}).length+'</strong></div>'+
+        '<div style="font-size:12px">Total pacientes: <strong>'+Object.keys(S.patients).length+'</strong></div>'+
+      '</div>'+
+    '</div>'+
+    '<div class="card">'+
+      '<div class="card-title" style="color:var(--warn)"><i class="ti ti-user-off"></i> Pacientes perdidos (sin sesión hace 3+ meses) — '+perdidos.length+'</div>'+
+      (perdidos.length===0?'<div style="font-size:12px;color:#ccc">Sin pacientes perdidos</div>':
+        perdidos.map(function(p){
+          return '<div class="ctrl-item">'+
+            '<div><div style="font-weight:500;font-size:13px">'+p.nombre+'</div>'+
+            '<div style="font-size:10px;color:#bbb">Última sesión: '+fd(p.ultimaFecha)+(p.tel?' · '+p.tel:'')+'</div></div>'+
+            (p.tel?'<a href="https://wa.me/51'+p.tel.replace(/\D/g,'')+'" target="_blank" class="btn btn-sm btn-primary" style="font-size:10px"><i class="ti ti-brand-whatsapp"></i> WhatsApp</a>':'')+
+          '</div>';
+        }).join(''))+
+    '</div>';
+}
+
+function guardarMeta(){
+  var v=parseFloat(document.getElementById('metaInput').value)||0;
+  localStorage.setItem('dnt_meta_mensual',v.toString());
+  showToast('Meta actualizada: S/ '+v.toFixed(2),'#27ae60');
+  pgEstrategia(document.getElementById('pageContent'));
 }
 
 </script>
