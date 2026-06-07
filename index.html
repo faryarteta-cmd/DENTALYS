@@ -157,7 +157,6 @@ textarea{resize:vertical;min-height:58px}
       <div class="nav-item" onclick="nav('profesionales')"><i class="ti ti-user-cog"></i> Profesionales</div>
       <div class="nav-sec">Reportes</div>
       <div class="nav-item" onclick="nav('estadistica')"><i class="ti ti-chart-bar"></i> Estadísticas</div>
-      <div class="nav-item" onclick="nav('reporte')"><i class="ti ti-report"></i> Reporte mensual</div>
       <div class="nav-item" onclick="nav('exportar')"><i class="ti ti-download"></i> Exportar</div>
     </div>
     <div style="padding:12px 18px;border-top:1px solid var(--gl)">
@@ -492,7 +491,7 @@ function selPac(pid){
 // ═══════════════════════════════════════════════════════════
 // NAVEGACIÓN
 // ═══════════════════════════════════════════════════════════
-const PAGE_TITLES={dashboard:'Inicio',alertas:'Controles programados',pacientes:'Lista de pacientes',nuevo:'Nuevo paciente',caja:'Caja del día',egresos:'Egresos',deudas:'Deudas fijas',agenda:'Agenda',kardex:'Kárdex',equipos:'Equipos',consentimientos:'Consentimientos',recibo:'Recibos',profesionales:'Profesionales',estadistica:'Estadísticas',reporte:'Reporte mensual',exportar:'Exportar',ficha:'Ficha del paciente'};
+const PAGE_TITLES={dashboard:'Inicio',alertas:'Controles programados',pacientes:'Lista de pacientes',nuevo:'Nuevo paciente',caja:'Caja del día',economia:'Economía',egresos:'Egresos',deudas:'Deudas fijas',agenda:'Agenda',kardex:'Kárdex',equipos:'Equipos',consentimientos:'Consentimientos',recibo:'Recibos',profesionales:'Profesionales',estadistica:'Estadísticas',reporte:'Reporte mensual',exportar:'Exportar',ficha:'Ficha del paciente'};
 const NAV_IDX={dashboard:0,alertas:1,pacientes:3,nuevo:4,caja:6,recibo:7,profesionales:9,estadistica:11,exportar:12};
 function nav(page){
   document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
@@ -505,6 +504,7 @@ function nav(page){
   else if(page==='pacientes')pgPacientes(c);
   else if(page==='nuevo')pgNuevo(c);
   else if(page==='caja')pgCaja(c);
+  else if(page==='economia')pgEconomia(c);
   else if(page==='egresos')pgEgresos(c);
   else if(page==='deudas')pgDeudas(c);
   else if(page==='agenda')pgAgenda(c);
@@ -1338,6 +1338,75 @@ function doExport(){
   }
 }
 
+
+
+// ═══════════════════════════════════════════════════════════
+// ECONOMÍA — PROTEGIDA CON CONTRASEÑA ADMIN
+// ═══════════════════════════════════════════════════════════
+var _econDesbloqueada=false;
+var _econTab='caja';
+
+function pgEconomia(c){
+  if(!_econDesbloqueada){
+    c.innerHTML=
+      '<div class="card" style="max-width:360px;margin:40px auto;text-align:center">'+
+        '<div style="font-size:32px;margin-bottom:10px">🔒</div>'+
+        '<div style="font-size:15px;font-weight:300;margin-bottom:6px">Área restringida</div>'+
+        '<div style="font-size:12px;color:#aaa;margin-bottom:20px">Solo administración</div>'+
+        '<div class="form-row" style="text-align:left"><label>Contraseña admin</label>'+
+        '<input type="password" id="econPwd" placeholder="..." onkeydown="chkEconKey(event)" /></div>'+
+        '<div id="econErr" style="color:var(--red);font-size:11px;margin-bottom:10px;display:none">Contraseña incorrecta</div>'+
+        '<button class="btn btn-primary" style="width:100%;justify-content:center" onclick="desbloquearEcon()"><i class="ti ti-lock-open"></i> Acceder</button>'+
+      '</div>';
+    return;
+  }
+  renderEconomia(c);
+}
+
+function bloquearEcon(){_econDesbloqueada=false;nav('dashboard');}
+function chkEconKey(e){if(e.key==='Enter')desbloquearEcon();}
+function desbloquearEcon(){
+  var v=document.getElementById('econPwd').value;
+  if(v===ADMIN_PASS){
+    _econDesbloqueada=true;
+    nav('economia');
+  } else {
+    var el=document.getElementById('econErr');
+    if(el)el.style.display='block';
+  }
+}
+
+function renderEconomia(c){
+  var tabs=['caja','egresos','deudas','recibo','reporte'];
+  var labels=['Caja del día','Egresos','Deudas fijas','Recibos/SUNAT','Reporte mensual'];
+  c.innerHTML=
+    '<div style="display:flex;justify-content:flex-end;margin-bottom:8px">'+
+      '<button class="btn btn-sm" style="color:var(--red)" onclick="bloquearEcon()"><i class="ti ti-lock"></i> Bloquear</button>'+
+    '</div>'+
+    '<div class="tab-bar">'+
+      tabs.map(function(t,i){return '<div class="tab '+(_econTab===t?'active':'')+'" data-tab="'+t+'" onclick="setEconTabEl(this)">'+labels[i]+'</div>';}).join('')+
+    '</div>'+
+    '<div id="econContent"></div>';
+  renderEconTab(_econTab);
+}
+
+function setEconTabEl(el){setEconTab(el.dataset.tab);}
+function setEconTab(t){
+  _econTab=t;
+  document.querySelectorAll('.tab-bar .tab').forEach(function(el){el.classList.remove('active');});
+  event.target.classList.add('active');
+  renderEconTab(t);
+}
+
+function renderEconTab(t){
+  var tc=document.getElementById('econContent');
+  if(!tc)return;
+  if(t==='caja')pgCaja(tc);
+  else if(t==='egresos')pgEgresos(tc);
+  else if(t==='deudas')pgDeudas(tc);
+  else if(t==='recibo')pgRecibo(tc);
+  else if(t==='reporte')pgReporte(tc);
+}
 
 // ═══════════════════════════════════════════════════════════
 // EGRESOS
