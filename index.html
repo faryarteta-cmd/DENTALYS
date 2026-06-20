@@ -6,7 +6,6 @@
 <title>DENTALYS — Sistema Clínico</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
-<script type="module">
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
@@ -36,25 +35,6 @@
     window._fbReady = true;
     setTimeout(initFirebaseAuth, 100);
   });
-</script>
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-  import { getFirestore, doc, setDoc, getDoc, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-  import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-
-  const firebaseConfig = {
-    apiKey: "AIzaSyCbB6xkxquiFMK2MZMQdCpzB-cmrqLz76M",
-    authDomain: "dentalys-99065.firebaseapp.com",
-    projectId: "dentalys-99065",
-    storageBucket: "dentalys-99065.firebasestorage.app",
-    messagingSenderId: "260378826482",
-    appId: "1:260378826482:web:481efb3b5377880cd6226b"
-  };
-
-  const app = initializeApp(firebaseConfig);
-  const db = getFirestore(app);
-  const auth = getAuth(app);
-
-  window._fb = { db, auth, doc, setDoc, getDoc, collection, getDocs, signInWithEmailAndPassword, onAuthStateChanged, signOut };
 </script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
