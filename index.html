@@ -11,28 +11,31 @@
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 <script>
-  var firebaseConfig = {
-    apiKey: "AIzaSyCbB6xkxquiFMK2MZMQdCpzB-cmrqLz76M",
-    authDomain: "dentalys-99065.firebaseapp.com",
-    projectId: "dentalys-99065",
-    storageBucket: "dentalys-99065.firebasestorage.app",
-    messagingSenderId: "260378826482",
-    appId: "1:260378826482:web:481efb3b5377880cd6226b"
-  };
-  firebase.initializeApp(firebaseConfig);
-  var _fbAuth = firebase.auth();
-  var _fbDb = firebase.firestore();
-  window._fb = {
-    auth: _fbAuth,
-    db: _fbDb,
-    signInWithEmailAndPassword: function(auth, email, pwd) { return auth.signInWithEmailAndPassword(email, pwd); },
-    onAuthStateChanged: function(auth, cb) { return auth.onAuthStateChanged(cb); },
-    signOut: function(auth) { return auth.signOut(); },
-    doc: function(db, col, id) { return db.collection(col).doc(id); },
-    setDoc: function(ref, data) { return ref.set(data); },
-    getDoc: function(ref) { return ref.get(); }
-  };
-  window._fbReady = true;
+  window.addEventListener('load', function() {
+    var firebaseConfig = {
+      apiKey: "AIzaSyCbB6xkxquiFMK2MZMQdCpzB-cmrqLz76M",
+      authDomain: "dentalys-99065.firebaseapp.com",
+      projectId: "dentalys-99065",
+      storageBucket: "dentalys-99065.firebasestorage.app",
+      messagingSenderId: "260378826482",
+      appId: "1:260378826482:web:481efb3b5377880cd6226b"
+    };
+    firebase.initializeApp(firebaseConfig);
+    var _fbAuth = firebase.auth();
+    var _fbDb = firebase.firestore();
+    window._fb = {
+      auth: _fbAuth,
+      db: _fbDb,
+      signInWithEmailAndPassword: function(a, email, pwd) { return _fbAuth.signInWithEmailAndPassword(email, pwd); },
+      onAuthStateChanged: function(a, cb) { return _fbAuth.onAuthStateChanged(cb); },
+      signOut: function(a) { return _fbAuth.signOut(); },
+      doc: function(db, col, id) { return _fbDb.collection(col).doc(id); },
+      setDoc: function(ref, data) { return ref.set(data, {merge:true}); },
+      getDoc: function(ref) { return ref.get(); }
+    };
+    window._fbReady = true;
+    setTimeout(initFirebaseAuth, 100);
+  });
 </script>
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
   import { getFirestore, doc, setDoc, getDoc, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
@@ -2401,9 +2404,7 @@ function initFirebaseAuth() {
 }
 
 // Iniciar cuando el DOM esté listo
-document.addEventListener('DOMContentLoaded', function() {
-  setTimeout(initFirebaseAuth, 500);
-});
+// Firebase se inicializa desde window.onload
 
 </script>
 </body>
