@@ -145,15 +145,24 @@ textarea{resize:vertical;min-height:58px}
     <div class="lock-name">DENTALYS</div>
     <div class="lock-slogan">Magia en tu Sonrisa</div>
     <div class="lock-line"></div>
-    <div class="form-row" style="text-align:left">
-      <label>Contraseña de acceso</label>
-      <input type="password" id="pwdInput" placeholder="Ingrese contraseña" onkeydown="if(event.key==='Enter')checkPwd()" autofocus />
+    <div id="loginForm">
+      <div class="form-row" style="text-align:left">
+        <label>Correo electrónico</label>
+        <input type="email" id="emailInput" placeholder="tu@correo.com" autocomplete="email" />
+      </div>
+      <div class="form-row" style="text-align:left;margin-top:10px">
+        <label>Contraseña</label>
+        <input type="password" id="pwdInput" placeholder="Contraseña" onkeydown="if(event.key==='Enter')checkPwd()" />
+      </div>
+      <div id="pwdError" style="color:var(--red);font-size:11px;margin-bottom:10px;display:none">Correo o contraseña incorrectos</div>
+      <button class="btn btn-primary" style="width:100%;justify-content:center;padding:10px;margin-top:10px" onclick="checkPwd()">
+        <i class="ti ti-lock-open"></i> Ingresar al sistema
+      </button>
     </div>
-    <div id="pwdError" style="color:var(--red);font-size:11px;margin-bottom:10px;display:none">Contraseña incorrecta</div>
-    <button class="btn btn-primary" style="width:100%;justify-content:center;padding:10px;margin-bottom:14px" onclick="checkPwd()">
-      <i class="ti ti-lock-open"></i> Ingresar al sistema
-    </button>
-    
+    <div id="loginLoading" style="display:none;text-align:center;padding:20px;font-size:12px;color:#aaa">
+      <i class="ti ti-loader" style="font-size:24px;display:block;margin-bottom:8px"></i>
+      Verificando credenciales...
+    </div>
   </div>
 </div>
 
