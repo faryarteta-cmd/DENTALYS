@@ -6,6 +6,48 @@
 <title>DENTALYS — Sistema Clínico</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<script type="module">
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+  import { getFirestore, doc, setDoc, getDoc, collection, getDocs, deleteDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+  import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyCbB6xkxquiFMK2MZMQdCpzB-cmrqLz76M",
+    authDomain: "dentalys-99065.firebaseapp.com",
+    projectId: "dentalys-99065",
+    storageBucket: "dentalys-99065.firebasestorage.app",
+    messagingSenderId: "260378826482",
+    appId: "1:260378826482:web:481efb3b5377880cd6226b"
+  };
+
+  const fbApp = initializeApp(firebaseConfig);
+  const db = getFirestore(fbApp);
+  const auth = getAuth(fbApp);
+
+  window._fb = { db, auth, doc, setDoc, getDoc, collection, getDocs, deleteDoc, signInWithEmailAndPassword, onAuthStateChanged, signOut };
+  window._fbReady = true;
+  document.dispatchEvent(new Event('fbReady'));
+</script>
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+  import { getFirestore, doc, setDoc, getDoc, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+  import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyCbB6xkxquiFMK2MZMQdCpzB-cmrqLz76M",
+    authDomain: "dentalys-99065.firebaseapp.com",
+    projectId: "dentalys-99065",
+    storageBucket: "dentalys-99065.firebasestorage.app",
+    messagingSenderId: "260378826482",
+    appId: "1:260378826482:web:481efb3b5377880cd6226b"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+  const auth = getAuth(app);
+
+  window._fb = { db, auth, doc, setDoc, getDoc, collection, getDocs, signInWithEmailAndPassword, onAuthStateChanged, signOut };
+</script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 :root{--tq:#00AFC1;--tq-d:#008fa0;--tq-l:#e6f7f9;--tq-ll:#f0fbfc;--graf:#4A4A4A;--gsb:#F4F5F6;--gl:#E8E9EA;--red:#c0392b;--warn:#e67e22;--ok:#27ae60;--font:'Montserrat',sans-serif}
@@ -224,7 +266,54 @@ let curPid = null, curTab = 'hc';
 // ═══════════════════════════════════════════════════════════
 // LOCAL STORAGE
 // ═══════════════════════════════════════════════════════════
-function saveL() { try { localStorage.setItem('dnt_v3', JSON.stringify(S)); } catch(e){} }
+function saveL() { 
+  try { localStorage.setItem('dnt_v3', JSON.stringify(S)); } catch(e){}
+  // Guardar en Firebase también
+  saveFB();
+}
+
+var _fbSaveTimer = null;
+function saveFB() {
+  if(_fbSaveTimer) clearTimeout(_fbSaveTimer);
+  _fbSaveTimer = setTimeout(function() {
+    var fb = window._fb;
+    if(!fb || !fb.auth.currentUser) return;
+    var uid = fb.auth.currentUser.uid;
+    fb.setDoc(fb.doc(fb.db, 'clinicas', uid), {
+      data: JSON.stringify(S),
+      updatedAt: new Date().toISOString()
+    }).catch(function(e){ console.log('FB save error:', e); });
+  }, 1500);
+}
+
+async function loadFB() {
+  var fb = window._fb;
+  if(!fb || !fb.auth.currentUser) return false;
+  var uid = fb.auth.currentUser.uid;
+  try {
+    var snap = await fb.getDoc(fb.doc(fb.db, 'clinicas', uid));
+    if(snap.exists()) {
+      var data = JSON.parse(snap.data().data);
+      S = data;
+      if(!S.profesionales) S.profesionales=['Dr./Dra. - (sin asignar)'];
+      if(!S.egresos) S.egresos=[];
+      if(!S.citas) S.citas=[];
+      if(!S.kardex) S.kardex=[];
+      if(!S.equipos) S.equipos=[];
+      if(!S.consentimientos) S.consentimientos=[];
+      if(!S.evoluciones) S.evoluciones=[];
+      if(!S.proveedores) S.proveedores=[];
+      if(!S.personal) S.personal=[];
+      if(!S.deudas) S.deudas=[
+        {id:'D1',nombre:'Alquiler',monto:1500,categoria:'Alquiler',dia:1,pendientes:2},
+        {id:'D2',nombre:'Personal',monto:1000,categoria:'Personal',dia:1,pendientes:0}
+      ];
+      localStorage.setItem('dnt_v3', JSON.stringify(S));
+      return true;
+    }
+  } catch(e) { console.log('FB load error:', e); }
+  return false;
+}
 function loadL() {
   try {
     const d = localStorage.getItem('dnt_v3');
@@ -408,27 +497,49 @@ function showToast(msg, bg, dur) {
 // AUTH
 // ═══════════════════════════════════════════════════════════
 function checkPwd() {
-  if (document.getElementById('pwdInput').value === PASS) {
-    document.getElementById('lockScreen').style.display = 'none';
-    document.getElementById('mainApp').style.display = 'flex';
-    loadL();
-    document.getElementById('sbDate').textContent =
-      new Date().toLocaleDateString('es-PE',{weekday:'long',day:'numeric',month:'long'});
-    // Si no hay datos locales, intentar recuperar desde Sheets
-    if(Object.keys(S.patients).length === 0) {
-      setSS('sync', 'Buscando datos en Sheets...');
-      restaurarDesdeSheets();
-    } else {
-      nav('dashboard');
-    }
-  } else {
+  const email = document.getElementById('emailInput').value.trim();
+  const pwd = document.getElementById('pwdInput').value;
+  if(!email || !pwd) { document.getElementById('pwdError').style.display='block'; return; }
+  document.getElementById('loginForm').style.display='none';
+  document.getElementById('loginLoading').style.display='block';
+  document.getElementById('pwdError').style.display='none';
+  
+  function doLogin() {
+    const fb = window._fb;
+    if(!fb) { setTimeout(doLogin, 200); return; }
+    fb.signInWithEmailAndPassword(fb.auth, email, pwd)
+      .then(function() {
+        // onAuthStateChanged se encarga del resto
+      })
+      .catch(function(err) {
+        document.getElementById('loginForm').style.display='block';
+        document.getElementById('loginLoading').style.display='none';
+        document.getElementById('pwdError').style.display='block';
+        document.getElementById('pwdError').textContent='Correo o contraseña incorrectos';
+      });
+  }
+  doLogin();
+  if(false) {
     document.getElementById('pwdError').style.display = 'block';
   }
 }
 function logout() {
+  const fb = window._fb;
+  if(fb) fb.signOut(fb.auth);
+  S = { patients:{}, sessions:{}, payments:{}, controls:{}, toothData:{}, examenes:{},
+    profesionales:['Dr./Dra. - (sin asignar)'],
+    egresos:[], citas:[], kardex:[], equipos:[], consentimientos:[], evoluciones:[], proveedores:[], personal:[],
+    deudas:[
+      {id:'D1',nombre:'Alquiler',monto:1500,categoria:'Alquiler',dia:1,pendientes:2},
+      {id:'D2',nombre:'Personal',monto:1000,categoria:'Personal',dia:1,pendientes:0}
+    ]
+  };
   document.getElementById('mainApp').style.display='none';
   document.getElementById('lockScreen').style.display='flex';
+  document.getElementById('loginForm').style.display='block';
+  document.getElementById('loginLoading').style.display='none';
   document.getElementById('pwdInput').value='';
+  if(document.getElementById('emailInput')) document.getElementById('emailInput').value='';
 }
 
 // ═══════════════════════════════════════════════════════════
@@ -2244,6 +2355,50 @@ function guardarMeta(){
   showToast('Meta actualizada: S/ '+v.toFixed(2),'#27ae60');
   pgEstrategia(document.getElementById('pageContent'));
 }
+
+
+// ═══════════════════════════════════════════════════════════
+// FIREBASE AUTH INIT
+// ═══════════════════════════════════════════════════════════
+function initFirebaseAuth() {
+  var fb = window._fb;
+  if(!fb) { setTimeout(initFirebaseAuth, 300); return; }
+  
+  fb.onAuthStateChanged(fb.auth, async function(user) {
+    if(user) {
+      // Usuario autenticado
+      document.getElementById('lockScreen').style.display = 'none';
+      document.getElementById('mainApp').style.display = 'flex';
+      document.getElementById('sbDate').textContent =
+        new Date().toLocaleDateString('es-PE',{weekday:'long',day:'numeric',month:'long'});
+      
+      setSS('sync', 'Cargando datos...');
+      
+      // Intentar cargar desde Firebase primero
+      var loaded = await loadFB();
+      if(!loaded) {
+        // Si no hay en Firebase, cargar desde localStorage
+        loadL();
+        if(Object.keys(S.patients).length === 0) {
+          restaurarDesdeSheets();
+        }
+      } else {
+        setSS('ok', 'Datos cargados desde la nube ✓');
+      }
+      nav('dashboard');
+      updateAC();
+    } else {
+      // No autenticado
+      document.getElementById('mainApp').style.display = 'none';
+      document.getElementById('lockScreen').style.display = 'flex';
+    }
+  });
+}
+
+// Iniciar cuando el DOM esté listo
+document.addEventListener('DOMContentLoaded', function() {
+  setTimeout(initFirebaseAuth, 500);
+});
 
 </script>
 </body>
