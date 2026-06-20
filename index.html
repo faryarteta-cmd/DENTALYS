@@ -7,12 +7,11 @@
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
 <script type="module">
-<script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-  import { getFirestore, doc, setDoc, getDoc, collection, getDocs, deleteDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-  import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-
-  const firebaseConfig = {
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<script>
+  var firebaseConfig = {
     apiKey: "AIzaSyCbB6xkxquiFMK2MZMQdCpzB-cmrqLz76M",
     authDomain: "dentalys-99065.firebaseapp.com",
     projectId: "dentalys-99065",
@@ -20,14 +19,20 @@
     messagingSenderId: "260378826482",
     appId: "1:260378826482:web:481efb3b5377880cd6226b"
   };
-
-  const fbApp = initializeApp(firebaseConfig);
-  const db = getFirestore(fbApp);
-  const auth = getAuth(fbApp);
-
-  window._fb = { db, auth, doc, setDoc, getDoc, collection, getDocs, deleteDoc, signInWithEmailAndPassword, onAuthStateChanged, signOut };
+  firebase.initializeApp(firebaseConfig);
+  var _fbAuth = firebase.auth();
+  var _fbDb = firebase.firestore();
+  window._fb = {
+    auth: _fbAuth,
+    db: _fbDb,
+    signInWithEmailAndPassword: function(auth, email, pwd) { return auth.signInWithEmailAndPassword(email, pwd); },
+    onAuthStateChanged: function(auth, cb) { return auth.onAuthStateChanged(cb); },
+    signOut: function(auth) { return auth.signOut(); },
+    doc: function(db, col, id) { return db.collection(col).doc(id); },
+    setDoc: function(ref, data) { return ref.set(data); },
+    getDoc: function(ref) { return ref.get(); }
+  };
   window._fbReady = true;
-  document.dispatchEvent(new Event('fbReady'));
 </script>
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
   import { getFirestore, doc, setDoc, getDoc, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
@@ -292,7 +297,7 @@ async function loadFB() {
   var uid = fb.auth.currentUser.uid;
   try {
     var snap = await fb.getDoc(fb.doc(fb.db, 'clinicas', uid));
-    if(snap.exists()) {
+    if(snap.exists && snap.exists()) {
       var data = JSON.parse(snap.data().data);
       S = data;
       if(!S.profesionales) S.profesionales=['Dr./Dra. - (sin asignar)'];
